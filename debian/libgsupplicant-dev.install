@@ -1,0 +1,3 @@
+debian/tmp/usr/lib/libgsupplicant.so usr/lib
+include/*.h usr/include/gsupplicant
+build/libgsupplicant.pc usr/lib/pkgconfig
