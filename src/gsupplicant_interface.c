@@ -1173,16 +1173,22 @@ gsupplicant_interface_call_add_network_finish(
     GSupplicantInterfaceAddNetworkCall* call,
     const GError* error)
 {
-    if (call->fn && !g_cancellable_is_cancelled(call->cancel)) {
-        if (call->cancel_id) {
-            /* In case if the callback calls g_cancellable_cancel() */
-            g_cancellable_disconnect(call->cancel, call->cancel_id);
-            call->cancel_id = 0;
+    /*
+     * If it's cancelled then gsupplicant_interface_add_network_call_free1
+     * call has been scheduled and we don't have to do anything here.
+     */
+    if (!g_cancellable_is_cancelled(call->cancel)) {
+        if (call->fn) {
+            if (call->cancel_id) {
+                /* In case if the callback calls g_cancellable_cancel() */
+                g_cancellable_disconnect(call->cancel, call->cancel_id);
+                call->cancel_id = 0;
+            }
+            call->fn(call->iface, call->cancel, error,
+                error ? NULL : call->path, call->data);
         }
-        call->fn(call->iface, call->cancel, error, error ? NULL : call->path,
-            call->data);
+        gsupplicant_interface_add_network_call_free(call);
     }
-    gsupplicant_interface_add_network_call_free(call);
 }
 
 static
@@ -1190,18 +1196,24 @@ void
 gsupplicant_interface_call_add_network_finish_error(
     GSupplicantInterfaceAddNetworkCall* call)
 {
-    if (call->fn && !g_cancellable_is_cancelled(call->cancel)) {
-        GError* error = g_error_new(G_IO_ERROR, G_IO_ERROR_FAILED,
-            "Failed to enable %s", call->path);
-        if (call->cancel_id) {
-            /* In case if the callback calls g_cancellable_cancel() */
-            g_cancellable_disconnect(call->cancel, call->cancel_id);
-            call->cancel_id = 0;
+    /*
+     * If it's cancelled then gsupplicant_interface_add_network_call_free1
+     * call has been scheduled and we don't have to do anything here.
+     */
+    if (!g_cancellable_is_cancelled(call->cancel)) {
+        if (call->fn) {
+            GError* error = g_error_new(G_IO_ERROR, G_IO_ERROR_FAILED,
+                "Failed to enable %s", call->path);
+            if (call->cancel_id) {
+                /* In case if the callback calls g_cancellable_cancel() */
+                g_cancellable_disconnect(call->cancel, call->cancel_id);
+                call->cancel_id = 0;
+            }
+            call->fn(call->iface, call->cancel, error, NULL, call->data);
+            g_error_free(error);
         }
-        call->fn(call->iface, call->cancel, error, NULL, call->data);
-        g_error_free(error);
+        gsupplicant_interface_add_network_call_free(call);
     }
-    gsupplicant_interface_add_network_call_free(call);
 }
 
 static
