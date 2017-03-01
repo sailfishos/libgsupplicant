@@ -737,8 +737,8 @@ gsupplicant_interface_wps_connect_free(
     }
     g_object_unref(connect->cancel);
     g_free(connect->pin);
-    g_free(connect->new_pin); 
-   if (connect->destroy) {
+    g_free(connect->new_pin);
+    if (connect->destroy) {
         connect->destroy(connect->data);
     }
     g_slice_free(GSupplicantInterfaceWPSConnect, connect);
@@ -2673,7 +2673,7 @@ gsupplicant_interface_add_network1(
 
 static
 void
-gsupplicant_interface_add_network_0(
+gsupplicant_interface_add_network0(
     GObject* obj,
     GAsyncResult* result,
     gpointer data)
@@ -2717,7 +2717,7 @@ gsupplicant_interface_add_network_full(
         call->pending = TRUE;
         if (flags & GSUPPLICANT_ADD_NETWORK_DELETE_OTHER) {
             fi_w1_wpa_supplicant1_interface_call_remove_all_networks(
-                priv->proxy, call->cancel, gsupplicant_interface_add_network_0,
+                priv->proxy, call->cancel, gsupplicant_interface_add_network0,
                 call);
         } else {
             fi_w1_wpa_supplicant1_interface_call_add_network(priv->proxy,
