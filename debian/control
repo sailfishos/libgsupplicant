@@ -9,7 +9,7 @@ Package: libgsupplicant
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Client library for mce
+Description: Client library for wpa_supplicant
 
 Package: libgsupplicant-dev
 Section: libdevel
