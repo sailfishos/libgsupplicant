@@ -430,13 +430,14 @@ gsupplicant_interface_add_network_args_security_peap(
             "autheap" : "auth";
         GString* buf = g_string_new(NULL);
         guint found, phase2 = np->phase2;
-        const char* method = gsupplicant_eap_method_name(np->phase2, &found);
+        const char* method = gsupplicant_eap_method_name(phase2, &found);
         while (method) {
             if (buf->len) g_string_append_c(buf, ' ');
             g_string_append(buf, auth);
             g_string_append_c(buf, '=');
             g_string_append(buf, method);
             phase2 &= ~found;
+            method = gsupplicant_eap_method_name(phase2, &found);
         }
         if (buf->len > 0) {
             gsupplicant_dict_add_string(builder, "phase2", buf->str);
