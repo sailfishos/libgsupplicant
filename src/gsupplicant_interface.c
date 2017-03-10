@@ -371,7 +371,7 @@ gsupplicant_interface_add_network_args_security_wep(
 
         if (len == 10 || len == 26) {
             /* Check for hex representation of the WEP key */
-            bin = gsupplicant_hex2bin(np->passphrase, len, buf);
+            bin = gutil_hex2bin(np->passphrase, len, buf);
         }
 
         if (bin) {
@@ -398,7 +398,7 @@ gsupplicant_interface_add_network_args_security_psk(
 
         if (len == 64) {
             /* Check for hex representation of the 256-bit pre-shared key */
-            bin = gsupplicant_hex2bin(np->passphrase, len, buf);
+            bin = gutil_hex2bin(np->passphrase, len, buf);
         }
 
         if (bin) {

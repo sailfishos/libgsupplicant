@@ -194,41 +194,6 @@ gsupplicant_parse_bits_array(
     return mask;
 }
 
-void*
-gsupplicant_hex2bin(
-    const char* str,
-    gint len,
-    guint8* data)
-{
-    if (str) {
-        if (len < 0) len = strlen(str);
-        if (len > 0 && !(len & 1)) {
-            gsize i;
-            guint8* ptr = data;
-            for (i=0; i<len; i+=2) {
-                static const guint8 hex[] = {
-                    0, 1, 2, 3, 4, 5, 6, 7,     /* 0x30..0x37 */
-                    8, 9, 0, 0, 0, 0, 0, 0,     /* 0x3a..0x3f */
-                    0,10,11,12,13,14,15, 0,     /* 0x40..0x47 */
-                    0, 0, 0, 0, 0, 0, 0, 0,     /* 0x4a..0x4f */
-                    0, 0, 0, 0, 0, 0, 0, 0,     /* 0x40..0x47 */
-                    0, 0, 0, 0, 0, 0, 0, 0,     /* 0x5a..0x5f */
-                    0,10,11,12,13,14,15         /* 0x60..0x66 */
-                };
-                const char x1 = str[i];
-                const char x2 = str[i+1];
-                if (isxdigit(x1) && isxdigit(x2)) {
-                    *ptr++ = (hex[x1-0x30] << 4) + hex[x2-0x30];
-                } else {
-                    return NULL;
-                }
-            }
-            return data;
-        }
-    }
-    return NULL;
-}
-
 static
 gboolean
 gsupplicant_idle_cb(

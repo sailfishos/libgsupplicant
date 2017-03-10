@@ -101,12 +101,6 @@ gsupplicant_name_int_concat(
     const GSupNameIntPair* list,
     gsize count);
 
-void*
-gsupplicant_hex2bin(
-    const char* str,
-    gint len,
-    guint8* data);
-
 const char*
 gsupplicant_format_bytes(
     GBytes* bytes,

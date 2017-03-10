@@ -8,8 +8,8 @@ URL: https://git.merproject.org/mer-core/libgsupplicant
 Source: %{name}-%{version}.tar.bz2
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(gio-2.0)
-BuildRequires: pkgconfig(libglibutil) >= 1.0.13
-Requires: libglibutil >= 1.0.13
+BuildRequires: pkgconfig(libglibutil) >= 1.0.21
+Requires: libglibutil >= 1.0.21
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 
