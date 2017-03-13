@@ -33,7 +33,7 @@
 #ifndef GSUPPLICANT_UTIL_PRIVATE_H
 #define GSUPPLICANT_UTIL_PRIVATE_H
 
-#include <gsupplicant_types.h>
+#include <gsupplicant_util.h>
 
 typedef struct gsupplicant_name_int_pair {
     const char* name;

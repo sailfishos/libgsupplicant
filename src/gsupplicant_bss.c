@@ -433,11 +433,7 @@ gsupplicant_bss_update_ssid(
         }
         g_free(priv->ssid_str);
         if (ssid) {
-            gsize size = 0;
-            const void* data = g_bytes_get_data(ssid, &size);
-            priv->ssid_str = g_malloc(size + 1);
-            memcpy(priv->ssid_str, data, size);
-            priv->ssid_str[size] = 0;
+            priv->ssid_str = gsupplicant_utf8_from_bytes(ssid);
             GDEBUG("[%s] " PROXY_PROPERTY_NAME_SSID ": %s \"%s\"",
                 self->path, gsupplicant_format_bytes(ssid, FALSE),
                 priv->ssid_str);

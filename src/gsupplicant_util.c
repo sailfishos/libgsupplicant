@@ -439,6 +439,36 @@ gsupplicant_variant_data_as_bytes(
     return NULL;
 }
 
+char*
+gsupplicant_utf8_from_bytes(
+    GBytes* bytes)
+{
+    if (bytes) {
+        gsize size = 0;
+        const char* ptr = g_bytes_get_data(bytes, &size);
+        if (size) {
+            GString* buf = g_string_sized_new(size);
+            while (size) {
+                const gchar* invalid = NULL;
+		if (g_utf8_validate(ptr, size, &invalid)) {
+                    g_string_append_len(buf, ptr, size);
+                    break;
+		} else {
+                    gsize valid = invalid - ptr;
+                    /* U+FFFD is REPLACEMENT CHARACTER */
+                    g_string_append_len(buf, ptr, valid);
+                    g_string_append(buf, "\357\277\275");
+                    ptr = invalid + 1;
+                    size -= valid + 1;
+                }
+            }
+            return g_string_free(buf, FALSE);
+        }
+        return g_strdup("");
+    }
+    return NULL;
+}
+
 /*
  * Local Variables:
  * mode: C

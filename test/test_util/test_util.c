@@ -37,6 +37,8 @@
 #include <gutil_log.h>
 #include <glib/gstdio.h>
 
+#define TEST_PREFIX "/util/"
+
 #define BIT_FOO     0x01
 #define BIT_BAR     0x02
 #define BIT_EMPTY   0x04
@@ -435,13 +437,95 @@ test_util_dict_parse(
 }
 
 /*==========================================================================*
+ * utf8_from_bytes
+ *==========================================================================*/
+
+typedef struct test_util_utf8_data {
+    const char* name;
+    const void* in;
+    gsize in_size;
+    const guint32* ucs4;
+    glong ucs4_len;
+} TestUTF8Data;
+
+static const guint8 test_util_utf8_data_1_in[] = {
+    0xd1, 0x82, 0xd0, 0xb5, 0xd1, 0x81, 0xd1, 0x82
+};
+static const guint32 test_util_utf8_data_1_ucs4[] = {
+    0x0442, 0x0435, 0x0441, 0x0442
+};
+static const guint8 test_util_utf8_data_2_in[] = {
+    0xd1, 0x82, 0xd0, 0xb5, 0xd1, 0x81, 0xd1, 0x82, 0x81
+};
+static const guint32 test_util_utf8_data_2_ucs4[] = {
+    0x0442, 0x0435, 0x0441, 0x0442, 0xfffd
+};
+static const guint8 test_util_utf8_data_3_in[] = {
+    0xf0, 0xd1, 0x82, 0xd0, 0xb5, 0xd1, 0x81, 0xd1, 0x82
+};
+static const guint32 test_util_utf8_data_3_ucs4[] = {
+    0xfffd, 0x0442, 0x0435, 0x0441, 0x0442
+};
+static const TestUTF8Data test_util_utf8_data[] = {
+    {
+        TEST_PREFIX "utf8_from_bytes1",
+        test_util_utf8_data_1_in, G_N_ELEMENTS(test_util_utf8_data_1_in),
+        test_util_utf8_data_1_ucs4, G_N_ELEMENTS(test_util_utf8_data_1_ucs4)
+    },{
+        TEST_PREFIX "utf8_from_bytes2",
+        test_util_utf8_data_2_in, G_N_ELEMENTS(test_util_utf8_data_2_in),
+        test_util_utf8_data_2_ucs4, G_N_ELEMENTS(test_util_utf8_data_2_ucs4)
+    },{
+        TEST_PREFIX "utf8_from_bytes3",
+        test_util_utf8_data_3_in, G_N_ELEMENTS(test_util_utf8_data_3_in),
+        test_util_utf8_data_3_ucs4, G_N_ELEMENTS(test_util_utf8_data_3_ucs4)
+    }
+};
+
+static
+void
+test_util_utf8_from_bytes(
+    void)
+{
+    GBytes* nothing = g_bytes_new_static(NULL, 0);
+    char* empty = gsupplicant_utf8_from_bytes(nothing);
+    g_assert(!g_strcmp0(empty, ""));
+    g_assert(!gsupplicant_utf8_from_bytes(NULL));
+    g_bytes_unref(nothing);
+    g_free(empty);
+}
+
+static
+void
+test_util_utf8_from_bytes1(
+    gconstpointer data)
+{
+    const TestUTF8Data* test = data;
+    GBytes* bytes = g_bytes_new_static(test->in, test->in_size);
+    char* utf8 = gsupplicant_utf8_from_bytes(bytes);
+    if (utf8) {
+        GError* error = NULL;
+        glong len = 0;
+        gunichar* ucs4 = g_utf8_to_ucs4(utf8, -1, NULL, &len, &error);
+        g_assert(!error);
+        g_assert(test->ucs4);
+        g_assert(test->ucs4_len == len);
+        g_assert(!memcmp(ucs4, test->ucs4, sizeof(guint32)*len));
+        g_free(utf8);
+        g_free(ucs4);
+    } else {
+        g_assert(!test->ucs4);
+    }
+    g_bytes_unref(bytes);
+}
+
+/*==========================================================================*
  * Common
  *==========================================================================*/
 
-#define TEST_PREFIX "/util/"
-
 int main(int argc, char* argv[])
 {
+    int i;
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
     g_type_init();
     G_GNUC_END_IGNORE_DEPRECATIONS;
@@ -453,6 +537,11 @@ int main(int argc, char* argv[])
     g_test_add_func(TEST_PREFIX "cancel_later", test_util_cancel_later);
     g_test_add_func(TEST_PREFIX "abs_path", test_util_abs_path);
     g_test_add_func(TEST_PREFIX "dict_parse", test_util_dict_parse);
+    g_test_add_func(TEST_PREFIX "utf8_from_bytes", test_util_utf8_from_bytes);
+    for (i = 0; i < G_N_ELEMENTS(test_util_utf8_data); i++) {
+        const TestUTF8Data* test = test_util_utf8_data + i;
+        g_test_add_data_func(test->name, test, test_util_utf8_from_bytes1);
+    }
     test_init(&test_opt, argc, argv);
     return g_test_run();
 }
