@@ -283,19 +283,17 @@ gsupplicant_network_properties_equal(
         const gsize size = g_hash_table_size(p1);
         if (g_hash_table_size(p2) == size) {
             if (size) {
+                GHashTableIter it;
+                gpointer key, value;
                 gboolean equal = TRUE;
-                char** keys = (char**)g_hash_table_get_keys_as_array(p1, NULL);
-                const GStrV* ptr;
-                for (ptr = keys; *ptr; ptr++) {
-                    const char* key = *ptr;
-                    const char* value1 = g_hash_table_lookup(p1, key);
+                g_hash_table_iter_init(&it, p1);
+                while (g_hash_table_iter_next(&it, &key, &value)) {
                     const char* value2 = g_hash_table_lookup(p2, key);
-                    if (g_strcmp0(value1, value2)) {
+                    if (g_strcmp0(value, value2)) {
                         equal = FALSE;
                         break;
                     }
                 }
-                g_free(keys);
                 return equal;
             }
             return TRUE;
@@ -322,10 +320,14 @@ gsupplicant_network_update_properties(
 #if GUTIL_LOG_VERBOSE
         if (GLOG_ENABLED(GUTIL_LOG_VERBOSE)) {
             if (props) {
-                char** keys;
-                const GStrV* ptr;
+                GHashTableIter it;
+                gpointer key;
+                char** keys = g_new(char*, g_hash_table_size(props) + 1);
+                char** ptr = keys;
+                g_hash_table_iter_init(&it, props);
+                while (g_hash_table_iter_next(&it, &key, NULL)) *ptr++ = key;
+                *ptr++ = NULL;
                 GVERBOSE("[%s] Properties:", self->path);
-                keys = (char**)g_hash_table_get_keys_as_array(props, NULL);
                 gutil_strv_sort(keys, TRUE);
                 for (ptr = keys; *ptr; ptr++) {
                     const char* key = *ptr;

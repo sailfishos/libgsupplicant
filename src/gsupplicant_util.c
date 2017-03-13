@@ -417,6 +417,22 @@ gsupplicant_variant_new_ayy(
     return g_variant_builder_end(&ayy);
 }
 
+GBytes *
+gsupplicant_variant_data_as_bytes(
+   GVariant *value)
+{
+    if (value) {
+#if GLIB_CHECK_VERSION(2,36,0)
+        /* This is more efficient */
+        return g_variant_get_data_as_bytes(value);
+#else
+        return g_bytes_new(g_variant_get_data(value),
+            g_variant_get_size(value));
+#endif
+    }
+    return NULL;
+}
+
 /*
  * Local Variables:
  * mode: C

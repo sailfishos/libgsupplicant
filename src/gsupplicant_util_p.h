@@ -177,6 +177,10 @@ GVariant*
 gsupplicant_variant_new_ayy(
     GBytes** bytes);
 
+GBytes *
+gsupplicant_variant_data_as_bytes(
+   GVariant *value);
+
 #endif /* GSUPPLICANT_UTIL_PRIVATE_H */
 
 /*

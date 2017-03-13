@@ -383,7 +383,7 @@ gsupplicant_bss_get_bytes(
         GDBusProxy *proxy = G_DBUS_PROXY(priv->proxy);
         GVariant* var = g_dbus_proxy_get_cached_property(proxy, name);
         if (var && g_variant_is_of_type(var, G_VARIANT_TYPE_BYTESTRING)) {
-            GBytes* bytes = g_variant_get_data_as_bytes(var);
+            GBytes* bytes = gsupplicant_variant_data_as_bytes(var);
             g_variant_unref(var);
             return bytes;
         }

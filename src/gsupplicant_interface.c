@@ -661,7 +661,7 @@ gsupplicant_interface_wps_parse_creds(
     GSupplicantWPSCredentials* wps = data;
     if (!g_strcmp0(name, "BSSID")) {
         if (wps->bssid) g_bytes_unref(wps->bssid);
-        wps->bssid = g_variant_get_data_as_bytes(value);
+        wps->bssid = gsupplicant_variant_data_as_bytes(value);
         GVERBOSE("  %s: %s", name, gsupplicant_format_bytes(wps->bssid, TRUE));
     } else if (!g_strcmp0(name, "SSID")) {
         if (g_variant_is_of_type(value, G_VARIANT_TYPE_STRING)) {
@@ -695,7 +695,7 @@ gsupplicant_interface_wps_parse_creds(
             encr_types_map, G_N_ELEMENTS(encr_types_map));
     } else if (!g_strcmp0(name, "Key")) {
         if (wps->key) g_bytes_unref(wps->key);
-        wps->key = g_variant_get_data_as_bytes(value);
+        wps->key = gsupplicant_variant_data_as_bytes(value);
         GVERBOSE("  %s: %s", name, gsupplicant_format_bytes(wps->key, TRUE));
     } else if (!g_strcmp0(name, "KeyIndex")) {
         if (g_variant_is_of_type(value, G_VARIANT_TYPE_UINT32)) {
