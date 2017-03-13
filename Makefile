@@ -1,8 +1,9 @@
 # -*- Mode: makefile-gmake -*-
 
-.PHONY: clean all debug release pkgconfig
+.PHONY: clean all debug release pkgconfig test
 .PHONY: print_debug_lib print_release_lib
 .PHONY: print_debug_link print_release_link
+.PHONY: print_debug_path print_release_path
 
 #
 # Required packages
@@ -68,6 +69,19 @@ GEN_DIR = $(BUILD_DIR)
 SPEC_DIR = spec
 DEBUG_BUILD_DIR = $(BUILD_DIR)/debug
 RELEASE_BUILD_DIR = $(BUILD_DIR)/release
+
+#
+# Code coverage
+#
+
+ifndef GCOV
+GCOV = 0
+endif
+
+ifneq ($(GCOV),0)
+CFLAGS += --coverage
+LDFLAGS += --coverage
+endif
 
 #
 # Tools and flags
@@ -155,13 +169,23 @@ print_debug_link:
 print_release_link:
 	@echo $(RELEASE_LINK)
 
+print_debug_path:
+	@echo $(DEBUG_BUILD_DIR)
+
+print_release_path:
+	@echo $(RELEASE_BUILD_DIR)
+
 clean:
 	rm -f *~ $(SRC_DIR)/*~ $(INCLUDE_DIR)/*~ rpm/*~
 	rm -fr $(BUILD_DIR) RPMS installroot
 	rm -fr debian/tmp debian/lib$(NAME) debian/lib$(NAME)-dev
 	rm -f documentation.list debian/files debian/*.substvars
 	rm -f debian/*.debhelper.log debian/*.debhelper debian/*~
+	make -C test cleaner
 	make -C tools/wpa-tool clean
+
+test:
+	make -C test test
 
 $(GEN_DIR):
 	mkdir -p $@

@@ -42,11 +42,13 @@ gsupplicant_name_int_find_bit(
     const GSupNameIntPair* list,
     gsize count)
 {
-    gsize i;
-    for (i=0; i<count; i++) {
-        if (list[i].value & value) {
-            if (bit) *bit = list[i].value;
-            return list[i].name;
+    if (value) {
+        gsize i;
+        for (i=0; i<count; i++) {
+            if (list[i].value & value) {
+                if (bit) *bit = list[i].value;
+                return list[i].name;
+            }
         }
     }
     if (bit) *bit = 0;
@@ -140,15 +142,18 @@ gsupplicant_name_int_concat(
     gsize count)
 {
     GString* buf = NULL;
-    gsize i;
-    for (i=0; i<count && value; i++) {
-        if (list[i].value & value) {
-            if (!buf) {
-                buf = g_string_new(NULL);
-            } else if (buf->len > 0) {
-                g_string_append_c(buf, separator);
+    if (value) {
+        gsize i;
+        for (i=0; i<count && value; i++) {
+            if ((list[i].value & value) && list[i].name[0]) {
+                if (!buf) {
+                    buf = g_string_new(NULL);
+                    if (!separator) separator = ',';
+                } else {
+                    g_string_append_c(buf, separator);
+                }
+                g_string_append(buf, list[i].name);
             }
-            g_string_append(buf, list[i].name);
         }
     }
     return buf ? g_string_free(buf, FALSE) : NULL;
@@ -217,7 +222,8 @@ gsupplicant_format_bytes(
             g_string_append_printf(buf, "%02x", data[i]);
         }
         if (append_length) {
-            g_string_append_printf(buf, " (%u)", (guint)size);
+            if (size > 0) g_string_append_c(buf, ' ');
+            g_string_append_printf(buf, "(%u)", (guint)size);
         }
         str = g_string_free(buf, FALSE);
         g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, gsupplicant_idle_cb,

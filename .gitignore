@@ -10,3 +10,6 @@ documentation.list
 installroot
 build
 RPMS
+test/coverage/full.gcov
+test/coverage/lib.gcov
+test/coverage/results
