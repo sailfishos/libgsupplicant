@@ -1,3 +1,11 @@
+libgsupplicant (1.0.4) unstable; urgency=low
+
+  * Fixed compilation against glib < 2.36
+  * Make sure that BSS SSID string is a valid UTF-8
+  * Added tests
+
+ -- Slava Monich <slava.monich@jolla.com>  Mon, 13 Mar 2017 19:05:31 +0200
+
 libgsupplicant (1.0.3) unstable; urgency=low
 
   * Use gutil_hex2bin function from libglibutil
