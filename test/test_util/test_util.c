@@ -466,6 +466,15 @@ static const guint8 test_util_utf8_data_3_in[] = {
 static const guint32 test_util_utf8_data_3_ucs4[] = {
     0xfffd, 0x0442, 0x0435, 0x0441, 0x0442
 };
+static const guint8 test_util_utf8_data_4_in[] = {
+    0x00, 0xd1, 0x82
+};
+static const guint32 test_util_utf8_data_4_ucs4[] = {
+    0xfffd, 0x0442
+};
+static const guint8 test_util_utf8_data_5_in[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
 static const TestUTF8Data test_util_utf8_data[] = {
     {
         TEST_PREFIX "utf8_from_bytes1",
@@ -479,6 +488,14 @@ static const TestUTF8Data test_util_utf8_data[] = {
         TEST_PREFIX "utf8_from_bytes3",
         test_util_utf8_data_3_in, G_N_ELEMENTS(test_util_utf8_data_3_in),
         test_util_utf8_data_3_ucs4, G_N_ELEMENTS(test_util_utf8_data_3_ucs4)
+    },{
+        TEST_PREFIX "utf8_from_bytes4",
+        test_util_utf8_data_4_in, G_N_ELEMENTS(test_util_utf8_data_4_in),
+        test_util_utf8_data_4_ucs4, G_N_ELEMENTS(test_util_utf8_data_4_ucs4)
+    },{
+        TEST_PREFIX "utf8_from_bytes5",
+        test_util_utf8_data_5_in, G_N_ELEMENTS(test_util_utf8_data_5_in),
+        NULL, 0
     }
 };
 
@@ -508,9 +525,13 @@ test_util_utf8_from_bytes1(
         glong len = 0;
         gunichar* ucs4 = g_utf8_to_ucs4(utf8, -1, NULL, &len, &error);
         g_assert(!error);
-        g_assert(test->ucs4);
         g_assert(test->ucs4_len == len);
-        g_assert(!memcmp(ucs4, test->ucs4, sizeof(guint32)*len));
+        if (len) {
+            g_assert(test->ucs4);
+            g_assert(!memcmp(ucs4, test->ucs4, sizeof(guint32)*len));
+        } else {
+            g_assert(!ucs4[0]);
+        }
         g_free(utf8);
         g_free(ucs4);
     } else {
