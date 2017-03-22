@@ -444,9 +444,15 @@ gsupplicant_utf8_from_bytes(
     GBytes* bytes)
 {
     if (bytes) {
-        gsize size = 0;
+        gsize i, size = 0;
+        gboolean empty = TRUE;
         const char* ptr = g_bytes_get_data(bytes, &size);
-        if (size) {
+        for (i=0; i<size && empty; i++) {
+            if (ptr[i]) {
+                empty = FALSE;
+            }
+        }
+        if (!empty) {
             GString* buf = g_string_sized_new(size);
             while (size) {
                 const gchar* invalid = NULL;
