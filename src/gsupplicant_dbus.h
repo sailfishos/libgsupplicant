@@ -34,6 +34,7 @@
 #define GSUPPLICANT_DBUS_H
 
 #include "gsupplicant_types.h"
+#include <gio/gio.h>
 
 #define GSUPPLICANT_BUS_TYPE    G_BUS_TYPE_SYSTEM
 #define GSUPPLICANT_SERVICE     "fi.w1.wpa_supplicant1"

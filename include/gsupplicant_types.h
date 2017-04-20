@@ -34,7 +34,6 @@
 #define GSUPPLICANT_TYPES_H
 
 #include <gutil_types.h>
-#include <gio/gio.h>
 
 G_BEGIN_DECLS
 

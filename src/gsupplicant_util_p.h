@@ -34,6 +34,7 @@
 #define GSUPPLICANT_UTIL_PRIVATE_H
 
 #include <gsupplicant_util.h>
+#include <gio/gio.h>
 
 typedef struct gsupplicant_name_int_pair {
     const char* name;

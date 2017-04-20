@@ -35,6 +35,11 @@
 
 #include <gsupplicant_types.h>
 
+/*
+ * This file should not include <gio/gio.h>
+ * There is code which relies on that.
+ */
+
 G_BEGIN_DECLS
 
 char*

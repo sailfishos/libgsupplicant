@@ -34,6 +34,7 @@
 #define GSUPPLICANT_BSS_H
 
 #include <gsupplicant_types.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
