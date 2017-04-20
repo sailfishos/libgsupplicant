@@ -1,3 +1,9 @@
+libgsupplicant (1.0.6) unstable; urgency=low
+
+  * Include <gio/gio.h> only when it's necessary
+
+ -- Slava Monich <slava.monich@jolla.com>  Thu, 20 Apr 2017 12:54:23 +0300
+
 libgsupplicant (1.0.5) unstable; urgency=low
 
   * Treat SSIDs consisting of all zeros as empty
