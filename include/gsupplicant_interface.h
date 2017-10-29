@@ -69,6 +69,7 @@ typedef enum gsupplicant_interface_property {
     GSUPPLICANT_INTERFACE_PROPERTY_BSSS,
     GSUPPLICANT_INTERFACE_PROPERTY_NETWORKS,
     GSUPPLICANT_INTERFACE_PROPERTY_SCAN_INTERVAL,
+    GSUPPLICANT_INTERFACE_PROPERTY_STATIONS,        /* Since 1.0.7 */
     GSUPPLICANT_INTERFACE_PROPERTY_COUNT
 } GSUPPLICANT_INTERFACE_PROPERTY;
 
@@ -217,6 +218,7 @@ struct gsupplicant_interface {
     const char* current_network;
     const GStrV* bsss;
     const GStrV* networks;
+    const GStrV* stations;          /* Since 1.0.7 */
 };
 
 typedef

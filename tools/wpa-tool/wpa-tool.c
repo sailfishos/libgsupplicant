@@ -343,6 +343,11 @@ dump_interface_property(
         dump_strv(iface->networks, " ", ",");
         printf("\n");
         break;
+    case GSUPPLICANT_INTERFACE_PROPERTY_STATIONS:
+        printf("Stations:");
+        dump_strv(iface->stations, " ", ",");
+        printf("\n");
+        break;
     default:
         break;
     }

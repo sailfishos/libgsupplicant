@@ -133,6 +133,8 @@ enum supplicant_interface_proxy_handler_id {
     PROXY_NETWORK_ADDED,
     PROXY_NETWORK_REMOVED,
     PROXY_NETWORK_SELECTED,
+    PROXY_STA_AUTHORIZED,
+    PROXY_STA_DEAUTHORIZED,
     PROXY_HANDLER_COUNT
 };
 
@@ -151,6 +153,7 @@ struct gsupplicant_interface_priv {
     guint32 pending_signals;
     GStrV* bsss;
     GStrV* networks;
+    GStrV* stations;
     char* path;
     char* country;
     char* driver;
@@ -184,7 +187,8 @@ G_DEFINE_TYPE(GSupplicantInterface, gsupplicant_interface, G_TYPE_OBJECT)
     p(CURRENT_NETWORK,current-network) \
     p(BSSS,bsss) \
     p(NETWORKS,networks) \
-    p(SCAN_INTERVAL,scan-interval)
+    p(SCAN_INTERVAL,scan-interval) \
+    p(STATIONS,stations)
 
 typedef enum gsupplicant_interface_signal {
 #define SIGNAL_ENUM_(P,p) SIGNAL_##P##_CHANGED,
@@ -1980,6 +1984,42 @@ gsupplicant_interface_proxy_network_selected(
 
 static
 void
+gsupplicant_interface_proxy_sta_authorized(
+    FiW1Wpa_supplicant1Interface* proxy,
+    const char* mac,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    GSupplicantInterfacePriv* priv = self->priv;
+    GDEBUG("Station authorized: %s", mac);
+    if (!gutil_strv_contains(priv->stations, mac)) {
+        self->stations = priv->stations = gutil_strv_add(priv->stations, mac);
+        priv->pending_signals |= SIGNAL_BIT(STATIONS);
+        gsupplicant_interface_emit_pending_signals(self);
+    }
+}
+
+static
+void
+gsupplicant_interface_proxy_sta_deauthorized(
+    FiW1Wpa_supplicant1Interface* proxy,
+    const char* mac,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    GSupplicantInterfacePriv* priv = self->priv;
+    const int pos = gutil_strv_find(priv->stations, mac);
+    GDEBUG("Station deauthorized: %s", mac);
+    if (pos >= 0) {
+        self->stations = priv->stations =
+            gutil_strv_remove_at(priv->stations, pos, TRUE);
+        priv->pending_signals |= SIGNAL_BIT(STATIONS);
+        gsupplicant_interface_emit_pending_signals(self);
+    }
+}
+
+static
+void
 gsupplicant_interface_supplicant_valid_changed(
     GSupplicant* supplicant,
     void* data)
@@ -2039,6 +2079,12 @@ gsupplicant_interface_create2(
         priv->proxy_handler_id[PROXY_NETWORK_SELECTED] =
             g_signal_connect(priv->proxy, "network-selected",
             G_CALLBACK(gsupplicant_interface_proxy_network_selected), self);
+        priv->proxy_handler_id[PROXY_STA_AUTHORIZED] =
+            g_signal_connect(priv->proxy, "sta-authorized",
+            G_CALLBACK(gsupplicant_interface_proxy_sta_authorized), self);
+        priv->proxy_handler_id[PROXY_STA_DEAUTHORIZED] =
+            g_signal_connect(priv->proxy, "sta-deauthorized",
+            G_CALLBACK(gsupplicant_interface_proxy_sta_deauthorized), self);
 
         priv->supplicant_handler_id[SUPPLICANT_VALID_CHANGED] =
             gsupplicant_add_handler(self->supplicant,
@@ -2846,6 +2892,7 @@ gsupplicant_interface_finalize(
     GASSERT(!priv->proxy);
     g_strfreev(priv->bsss);
     g_strfreev(priv->networks);
+    g_strfreev(priv->stations);
     g_free(priv->path);
     g_free(priv->country);
     g_free(priv->driver);
