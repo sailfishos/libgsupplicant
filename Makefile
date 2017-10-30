@@ -23,7 +23,7 @@ all: debug release pkgconfig
 
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
-VERSION_RELEASE = 6
+VERSION_RELEASE = 7
 
 # Version for pkg-config
 PCVERSION = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_RELEASE)
@@ -239,13 +239,9 @@ $(PKGCONFIG): $(LIB_NAME).pc.in
 # Install
 #
 
-INSTALL_PERM  = 644
-INSTALL_OWNER = $(shell id -u)
-INSTALL_GROUP = $(shell id -g)
-
 INSTALL = install
 INSTALL_DIRS = $(INSTALL) -d
-INSTALL_FILES = $(INSTALL) -m $(INSTALL_PERM)
+INSTALL_FILES = $(INSTALL) -m 644
 
 INSTALL_LIB_DIR = $(DESTDIR)/usr/lib
 INSTALL_INCLUDE_DIR = $(DESTDIR)/usr/include/$(NAME)

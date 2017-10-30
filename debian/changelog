@@ -1,3 +1,9 @@
+libgsupplicant (1.0.7) unstable; urgency=low
+
+  * Add stations field to GSupplicantInterface
+
+ -- Slava Monich <slava.monich@jolla.com>  Mon, 30 Oct 2017 12:26:40 +0200
+
 libgsupplicant (1.0.6) unstable; urgency=low
 
   * Include <gio/gio.h> only when it's necessary
