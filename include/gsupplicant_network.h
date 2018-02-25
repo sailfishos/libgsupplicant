@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 Jolla Ltd.
+ * Copyright (C) 2015-2018 Jolla Ltd.
  * Contact: Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
@@ -34,6 +34,7 @@
 #define GSUPPLICANT_NETWORK_H
 
 #include <gsupplicant_types.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
