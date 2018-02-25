@@ -1,3 +1,9 @@
+libgsupplicant (1.0.8) unstable; urgency=low
+
+  * Explicitely include glib-object.h where it's needed
+
+ -- Slava Monich <slava.monich@jolla.com>  Sun, 25 Feb 2018 13:20:49 +0200
+
 libgsupplicant (1.0.7) unstable; urgency=low
 
   * Add stations field to GSupplicantInterface
