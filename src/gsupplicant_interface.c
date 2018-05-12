@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 Jolla Ltd.
+ * Copyright (C) 2015-2018 Jolla Ltd.
  * Contact: Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
@@ -734,8 +734,8 @@ gsupplicant_interface_wps_connect_free(
     GSupplicantInterfaceWPSConnect* connect)
 {
     gsupplicant_interface_wps_connect_dispose(connect);
-    if (connect->wps.bssid) g_bytes_ref(connect->wps.bssid);
-    if (connect->wps.p2p_address) g_bytes_ref(connect->wps.p2p_address);
+    if (connect->wps.bssid) g_bytes_unref(connect->wps.bssid);
+    if (connect->wps.p2p_address) g_bytes_unref(connect->wps.p2p_address);
     gsupplicant_interface_unref(connect->iface);
     if (connect->cancel_id) {
         g_cancellable_disconnect(connect->cancel, connect->cancel_id);
