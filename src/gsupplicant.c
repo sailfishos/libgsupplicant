@@ -47,10 +47,12 @@ GLOG_MODULE_DEFINE("gsupplicant");
 
 /* Object definition */
 enum gsupplicant_proxy_handler_id {
-    PROXY_GPROPERTIES_CHANGED,
-    PROXY_PROPERTIES_CHANGED,
     PROXY_INTERFACE_ADDED,
     PROXY_INTERFACE_REMOVED,
+    PROXY_NOTIFY_NAME_OWNER,
+    PROXY_NOTIFY_CAPABILITIES,
+    PROXY_NOTIFY_EAP_METHODS,
+    PROXY_NOTIFY_INTERFACES,
     PROXY_HANDLER_COUNT
 };
 
@@ -58,7 +60,6 @@ struct gsupplicant_priv {
     GDBusConnection* bus;
     FiW1Wpa_supplicant1* proxy;
     guint32 pending_signals;
-    char* name_owner;
     GStrV* interfaces;
     gulong proxy_handler_id[PROXY_HANDLER_COUNT];
 };
@@ -130,7 +131,6 @@ static const char* gsupplicant_signame[SIGNAL_COUNT] = {
 G_STATIC_ASSERT(G_N_ELEMENTS(gsupplicant_signame) == SIGNAL_COUNT);
 
 /* Proxy properties */
-#define PROXY_PROPERTY_NAME_OWNER           "g-name-owner"
 #define PROXY_PROPERTY_NAME_DEBUG_LEVEL     "DebugLevel"
 #define PROXY_PROPERTY_NAME_DEBUG_SHOW_KEYS "DebugShowKeys"
 #define PROXY_PROPERTY_NAME_DEBUG_TIMESTAMP "DebugTimestamp"
@@ -429,7 +429,7 @@ gsupplicant_convert_to_bitmask(
 
 static
 guint
-gsupplicant_get_caps(
+gsupplicant_get_capabilities(
     GSupplicant* self)
 {
     return self->valid ? gsupplicant_convert_to_bitmask(
@@ -445,6 +445,21 @@ gsupplicant_get_eap_methods(
     return self->valid ? gsupplicant_convert_to_bitmask(
         fi_w1_wpa_supplicant1_get_eap_methods(self->priv->proxy),
         gsupplicant_eap_methods, G_N_ELEMENTS(gsupplicant_eap_methods)) : 0;
+}
+
+static
+void
+gsupplicant_update_name_owner(
+    GSupplicant* self)
+{
+    GSupplicantPriv* priv = self->priv;
+    char* owner = g_dbus_proxy_get_name_owner(G_DBUS_PROXY(priv->proxy));
+    const gboolean valid = (owner != NULL);
+    g_free(owner);
+    if (self->valid != valid) {
+        self->valid = valid;
+        priv->pending_signals |= SIGNAL_BIT(VALID);
+    }
 }
 
 static
@@ -480,10 +495,10 @@ gsupplicant_update_interfaces(
 
 static
 void
-gsupplicant_update_caps(
+gsupplicant_update_capabilities(
     GSupplicant* self)
 {
-    const guint caps = gsupplicant_get_caps(self);
+    const guint caps = gsupplicant_get_capabilities(self);
     if (self->caps != caps) {
         self->caps = caps;
         self->priv->pending_signals |= SIGNAL_BIT(CAPABILITIES);
@@ -504,109 +519,50 @@ gsupplicant_update_eap_methods(
 
 static
 void
-gsupplicant_update_name_owner(
-    GSupplicant* self)
-{
-    GSupplicantPriv* priv = self->priv;
-    GDBusProxy *proxy = G_DBUS_PROXY(priv->proxy);
-    char* owner = g_dbus_proxy_get_name_owner(proxy);
-    const gboolean was_valid = (priv->name_owner != NULL);
-    if (g_strcmp0(owner, priv->name_owner)) {
-        g_free(priv->name_owner);
-        priv->name_owner = owner;
-        self->valid = (owner != NULL);
-        gsupplicant_update_interfaces(self);
-        gsupplicant_update_caps(self);
-        gsupplicant_update_eap_methods(self);
-        if (self->valid) {
-            /*
-             * There won't be any cached properties if GetAll call failed
-             * due to permission or any other problem.
-             */
-            gchar** names = g_dbus_proxy_get_cached_property_names(proxy);
-            self->failed = (!names);
-            g_strfreev(names);
-        } else {
-            self->failed = FALSE;
-        }
-        if (was_valid != self->valid) {
-            priv->pending_signals |= SIGNAL_BIT(VALID);
-        }
-    } else {
-        g_free(owner);
-    }
-}
-
-static
-void
-gsupplicant_proxy_gproperties_changed(
-    GDBusProxy* proxy,
-    GVariant* changed,
-    GStrv invalidated,
+gsupplicant_notify_name_owner(
+    FiW1Wpa_supplicant1* proxy,
+    GParamSpec* param,
     gpointer data)
 {
     GSupplicant* self = GSUPPLICANT(data);
-    GSupplicantPriv* priv = self->priv;
-    gboolean name_owner_changed = FALSE;
-    if (invalidated) {
-        char** ptr;
-        for (ptr = invalidated; *ptr; ptr++) {
-            const char* name = *ptr;
-            if (!strcmp(PROXY_PROPERTY_NAME_OWNER, name)) {
-                name_owner_changed = TRUE;
-            } else if (!strcmp(PROXY_PROPERTY_NAME_CAPABILITIES, name)) {
-                if (self->caps) {
-                    self->caps = 0;
-                    priv->pending_signals |= SIGNAL_BIT(CAPABILITIES);
-                }
-            } else if (!strcmp(PROXY_PROPERTY_NAME_EAP_METHODS, name)) {
-                if (self->eap_methods) {
-                    self->eap_methods = 0;
-                    priv->pending_signals |= SIGNAL_BIT(EAP_METHODS);
-                }
-            } else if (!strcmp(PROXY_PROPERTY_NAME_INTERFACES, name)) {
-                if (priv->interfaces) {
-                    g_strfreev(priv->interfaces);
-                    self->interfaces = priv->interfaces = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(INTERFACES);
-                }
-            }
-        }
-    }
-    if (changed) {
-        GVariantIter it;
-        GVariant* value;
-        const gchar* name;
-        g_variant_iter_init(&it, changed);
-        while (g_variant_iter_next(&it, "{&sv}", &name, &value)) {
-            if (!strcmp(PROXY_PROPERTY_NAME_OWNER, name)) {
-                name_owner_changed = TRUE;
-            } else if (!strcmp(PROXY_PROPERTY_NAME_CAPABILITIES, name)) {
-                gsupplicant_update_caps(self);
-            } else if (!strcmp(PROXY_PROPERTY_NAME_EAP_METHODS, name)) {
-                gsupplicant_update_eap_methods(self);
-            } else if (!strcmp(PROXY_PROPERTY_NAME_INTERFACES, name)) {
-                gsupplicant_update_interfaces(self);
-            }
-            g_variant_unref(value);
-        }
-    }
-
-    if (name_owner_changed) {
-        gsupplicant_update_name_owner(self);
-    }
-
+    gsupplicant_update_name_owner(self);
     gsupplicant_emit_pending_signals(self);
 }
 
 static
 void
-gsupplicant_proxy_properties_changed(
-    GDBusProxy* proxy,
-    GVariant* changed,
+gsupplicant_notify_capabilities(
+    FiW1Wpa_supplicant1* proxy,
+    GParamSpec* param,
     gpointer data)
 {
-    gsupplicant_proxy_gproperties_changed(proxy, changed, NULL, data);
+    GSupplicant* self = GSUPPLICANT(data);
+    gsupplicant_update_capabilities(self);
+    gsupplicant_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_notify_eap_methods(
+    FiW1Wpa_supplicant1* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicant* self = GSUPPLICANT(data);
+    gsupplicant_update_eap_methods(self);
+    gsupplicant_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_notify_interfaces(
+    FiW1Wpa_supplicant1* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicant* self = GSUPPLICANT(data);
+    gsupplicant_update_interfaces(self);
+    gsupplicant_emit_pending_signals(self);
 }
 
 static
@@ -661,16 +617,9 @@ gsupplicant_proxy_created(
         result, &error);
     if (proxy) {
         GASSERT(!priv->proxy);
-        GASSERT(!priv->name_owner);
         GASSERT(!self->valid);
 
         priv->proxy = proxy;
-        priv->proxy_handler_id[PROXY_GPROPERTIES_CHANGED] =
-            g_signal_connect(proxy, "g-properties-changed",
-            G_CALLBACK(gsupplicant_proxy_gproperties_changed), self);
-        priv->proxy_handler_id[PROXY_PROPERTIES_CHANGED] =
-            g_signal_connect(proxy, "properties-changed",
-            G_CALLBACK(gsupplicant_proxy_properties_changed), self);
         priv->proxy_handler_id[PROXY_INTERFACE_ADDED] =
             g_signal_connect(proxy, "interface-added",
             G_CALLBACK(gsupplicant_proxy_interface_added), self);
@@ -678,7 +627,23 @@ gsupplicant_proxy_created(
             g_signal_connect(proxy, "interface-removed",
             G_CALLBACK(gsupplicant_proxy_interface_removed), self);
 
+        priv->proxy_handler_id[PROXY_NOTIFY_NAME_OWNER] =
+            g_signal_connect(priv->proxy, "notify::g-name-owner",
+            G_CALLBACK(gsupplicant_notify_name_owner), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_CAPABILITIES] =
+            g_signal_connect(priv->proxy, "notify::capabilities",
+            G_CALLBACK(gsupplicant_notify_capabilities), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_EAP_METHODS] =
+            g_signal_connect(priv->proxy, "notify::eap-methods",
+            G_CALLBACK(gsupplicant_notify_eap_methods), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_INTERFACES] =
+            g_signal_connect(priv->proxy, "notify::interfaces",
+            G_CALLBACK(gsupplicant_notify_interfaces), self);
+
         gsupplicant_update_name_owner(self);
+        gsupplicant_update_capabilities(self);
+        gsupplicant_update_eap_methods(self);
+        gsupplicant_update_interfaces(self);
         gsupplicant_emit_pending_signals(self);
     } else {
         GERR("%s", GERRMSG(error));
@@ -699,6 +664,8 @@ gsupplicant_bus_get_finished(
     GError* error = NULL;
     priv->bus = g_bus_get_finish(result, &error);
     if (priv->bus) {
+        GDEBUG("Bus connected");
+        /* Start the initialization sequence */
         fi_w1_wpa_supplicant1_proxy_new(priv->bus, G_DBUS_PROXY_FLAGS_NONE,
             GSUPPLICANT_SERVICE, GSUPPLICANT_PATH, NULL,
             gsupplicant_proxy_created, gsupplicant_ref(self));
@@ -939,30 +906,6 @@ gsupplicant_init(
 }
 
 /**
- * First stage of deinitialization (release all references).
- * May be called more than once in the lifetime of the object.
- */
-static
-void
-gsupplicant_dispose(
-    GObject* object)
-{
-    GSupplicant* self = GSUPPLICANT(object);
-    GSupplicantPriv* priv = self->priv;
-    if (priv->proxy) {
-        gutil_disconnect_handlers(priv->proxy, priv->proxy_handler_id,
-            G_N_ELEMENTS(priv->proxy_handler_id));
-        g_object_unref(priv->proxy);
-        priv->proxy = NULL;
-    }
-    if (priv->bus) {
-        g_object_unref(priv->bus);
-        priv->bus = NULL;
-    }
-    G_OBJECT_CLASS(gsupplicant_parent_class)->dispose(object);
-}
-
-/**
  * Final stage of deinitialization
  */
 static
@@ -973,12 +916,15 @@ gsupplicant_finalize(
     GSupplicant* self = GSUPPLICANT(object);
     GSupplicantPriv* priv = self->priv;
     GVERBOSE_("");
-    GASSERT(!priv->proxy);
+    if (priv->proxy) {
+        gutil_disconnect_handlers(priv->proxy, priv->proxy_handler_id,
+            G_N_ELEMENTS(priv->proxy_handler_id));
+        g_object_unref(priv->proxy);
+    }
     if (priv->bus) {
         g_dbus_connection_flush_sync(priv->bus, NULL, NULL);
         g_object_unref(priv->bus);
     }
-    g_free(priv->name_owner);
     g_strfreev(priv->interfaces);
     G_OBJECT_CLASS(gsupplicant_parent_class)->finalize(object);
 }
@@ -992,9 +938,7 @@ gsupplicant_class_init(
     GSupplicantClass* klass)
 {
     int i;
-    GObjectClass* object_class = G_OBJECT_CLASS(klass);
-    object_class->dispose = gsupplicant_dispose;
-    object_class->finalize = gsupplicant_finalize;
+    G_OBJECT_CLASS(klass)->finalize = gsupplicant_finalize;
     g_type_class_add_private(klass, sizeof(GSupplicantPriv));
     for (i=0; i<SIGNAL_PROPERTY_CHANGED; i++) {
         gsupplicant_signals[i] =  g_signal_new(gsupplicant_signame[i],

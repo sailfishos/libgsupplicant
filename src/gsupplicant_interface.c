@@ -126,8 +126,6 @@ typedef struct gsupplicant_interface_wps_connect {
 
 /* Object definition */
 enum supplicant_interface_proxy_handler_id {
-    PROXY_GPROPERTIES_CHANGED,
-    PROXY_PROPERTIES_CHANGED,
     PROXY_BSS_ADDED,
     PROXY_BSS_REMOVED,
     PROXY_NETWORK_ADDED,
@@ -135,6 +133,19 @@ enum supplicant_interface_proxy_handler_id {
     PROXY_NETWORK_SELECTED,
     PROXY_STA_AUTHORIZED,
     PROXY_STA_DEAUTHORIZED,
+    PROXY_NOTIFY_STATE,
+    PROXY_NOTIFY_SCANNING,
+    PROXY_NOTIFY_AP_SCAN,
+    PROXY_NOTIFY_SCAN_INTERVAL,
+    PROXY_NOTIFY_CAPABILITIES,
+    PROXY_NOTIFY_COUNTRY,
+    PROXY_NOTIFY_DRIVER,
+    PROXY_NOTIFY_IFNAME,
+    PROXY_NOTIFY_BRIDGE_IFNAME,
+    PROXY_NOTIFY_CURRENT_BSS,
+    PROXY_NOTIFY_CURRENT_NETWORK,
+    PROXY_NOTIFY_BSSS,
+    PROXY_NOTIFY_NETWORKS,
     PROXY_HANDLER_COUNT
 };
 
@@ -1769,136 +1780,158 @@ gsupplicant_interface_update_networks(
 
 static
 void
-gsupplicant_interface_proxy_gproperties_changed(
+gsupplicant_interface_notify_state(
     FiW1Wpa_supplicant1Interface* proxy,
-    GVariant* changed,
-    GStrv invalidated,
+    GParamSpec* param,
     gpointer data)
 {
     GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
-    GSupplicantInterfacePriv* priv = self->priv;
-    if (invalidated) {
-        char** ptr;
-        for (ptr = invalidated; *ptr; ptr++) {
-            const char* name = *ptr;
-            if (!strcmp(name, PROXY_PROPERTY_NAME_STATE)) {
-                if (self->state != GSUPPLICANT_INTERFACE_STATE_UNKNOWN) {
-                    self->state = GSUPPLICANT_INTERFACE_STATE_UNKNOWN;
-                    priv->pending_signals |= SIGNAL_BIT(STATE);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_SCANNING)) {
-                if (self->scanning) {
-                    self->scanning = FALSE;
-                    priv->pending_signals |= SIGNAL_BIT(SCANNING);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_AP_SCAN)) {
-                if (self->ap_scan) {
-                    self->ap_scan = 0;
-                    priv->pending_signals |= SIGNAL_BIT(AP_SCAN);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_CAPABILITIES)) {
-                const GSupplicantInterfaceCaps caps = self->caps;
-                memset(&self->caps, 0, sizeof(self->caps));
-                if (memcmp(&caps, &self->caps, sizeof(caps))) {
-                    priv->pending_signals |= SIGNAL_BIT(CAPS);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_COUNTRY)) {
-                if (self->country) {
-                    self->country = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(COUNTRY);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_DRIVER)) {
-                if (self->driver) {
-                    self->driver = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(DRIVER);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_IFNAME)) {
-                if (self->ifname) {
-                    self->ifname = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(IFNAME);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_BRIDGE_IFNAME)) {
-                if (self->bridge_ifname) {
-                    self->bridge_ifname = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(BRIDGE_IFNAME);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_CURRENT_BSS)) {
-                if (self->current_bss) {
-                    self->current_bss = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(CURRENT_BSS);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_CURRENT_NETWORK)) {
-                if (self->current_network) {
-                    self->current_network = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(CURRENT_NETWORK);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_SCAN_INTERVAL)) {
-                if (self->scan_interval) {
-                    self->scan_interval = 0;
-                    priv->pending_signals |= SIGNAL_BIT(SCAN_INTERVAL);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_BSSS)) {
-                if (priv->bsss) {
-                    g_strfreev(priv->bsss);
-                    self->bsss = priv->bsss = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(BSSS);
-                }
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_NETWORKS)) {
-                if (priv->networks) {
-                    g_strfreev(priv->networks);
-                    self->networks = priv->networks = NULL;
-                    priv->pending_signals |= SIGNAL_BIT(NETWORKS);
-                }
-            }
-        }
-    }
-    if (changed) {
-        GVariantIter it;
-        GVariant* value;
-        const char* name;
-        g_variant_iter_init(&it, changed);
-        while (g_variant_iter_next(&it, "{&sv}", &name, &value)) {
-            if (!strcmp(name, PROXY_PROPERTY_NAME_STATE)) {
-                gsupplicant_interface_update_state(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_SCANNING)) {
-                gsupplicant_interface_update_scanning(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_AP_SCAN)) {
-                gsupplicant_interface_update_ap_scan(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_SCAN_INTERVAL)) {
-                gsupplicant_interface_update_scan_interval(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_CAPABILITIES)) {
-                gsupplicant_interface_update_caps(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_COUNTRY)) {
-                gsupplicant_interface_update_country(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_DRIVER)) {
-                gsupplicant_interface_update_driver(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_IFNAME)) {
-                gsupplicant_interface_update_ifname(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_BRIDGE_IFNAME)) {
-                gsupplicant_interface_update_bridge_ifname(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_CURRENT_BSS)) {
-                gsupplicant_interface_update_current_bss(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_CURRENT_NETWORK)) {
-                gsupplicant_interface_update_current_network(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_BSSS)) {
-                gsupplicant_interface_update_bsss(self);
-            } else if (!strcmp(name, PROXY_PROPERTY_NAME_NETWORKS)) {
-                gsupplicant_interface_update_networks(self);
-            }
-            g_variant_unref(value);
-        }
-    }
+    gsupplicant_interface_update_state(self);
     gsupplicant_interface_emit_pending_signals(self);
 }
 
 static
 void
-gsupplicant_interface_proxy_properties_changed(
+gsupplicant_interface_notify_scanning(
     FiW1Wpa_supplicant1Interface* proxy,
-    GVariant* change,
+    GParamSpec* param,
     gpointer data)
 {
-    gsupplicant_interface_proxy_gproperties_changed(proxy, change, NULL, data);
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_scanning(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_ap_scan(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_ap_scan(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_scan_interval(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_scan_interval(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_caps(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_caps(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_country(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_country(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_driver(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_driver(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_ifname(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_ifname(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_bridge_ifname(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_bridge_ifname(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_current_bss(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_current_bss(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_current_network(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_current_network(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_bsss(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_bsss(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_networks(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_networks(self);
+    gsupplicant_interface_emit_pending_signals(self);
 }
 
 static
@@ -2068,12 +2101,6 @@ gsupplicant_interface_create2(
     priv->proxy = fi_w1_wpa_supplicant1_interface_proxy_new_for_bus_finish(
         result, &error);
     if (priv->proxy) {
-        priv->proxy_handler_id[PROXY_GPROPERTIES_CHANGED] =
-            g_signal_connect(priv->proxy, "g-properties-changed",
-            G_CALLBACK(gsupplicant_interface_proxy_gproperties_changed), self);
-        priv->proxy_handler_id[PROXY_PROPERTIES_CHANGED] =
-            g_signal_connect(priv->proxy, "properties-changed",
-            G_CALLBACK(gsupplicant_interface_proxy_properties_changed), self);
         priv->proxy_handler_id[PROXY_BSS_ADDED] =
             g_signal_connect(priv->proxy, "bssadded",
             G_CALLBACK(gsupplicant_interface_proxy_bss_added), self);
@@ -2095,6 +2122,46 @@ gsupplicant_interface_create2(
         priv->proxy_handler_id[PROXY_STA_DEAUTHORIZED] =
             g_signal_connect(priv->proxy, "sta-deauthorized",
             G_CALLBACK(gsupplicant_interface_proxy_sta_deauthorized), self);
+
+        priv->proxy_handler_id[PROXY_NOTIFY_STATE] =
+            g_signal_connect(priv->proxy, "notify::state",
+            G_CALLBACK(gsupplicant_interface_notify_state), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_SCANNING] =
+            g_signal_connect(priv->proxy, "notify::scanning",
+            G_CALLBACK(gsupplicant_interface_notify_scanning), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_AP_SCAN] =
+            g_signal_connect(priv->proxy, "notify::ap-scan",
+            G_CALLBACK(gsupplicant_interface_notify_ap_scan), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_SCAN_INTERVAL] =
+            g_signal_connect(priv->proxy, "notify::scan-interval",
+            G_CALLBACK(gsupplicant_interface_notify_scan_interval), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_CAPABILITIES] =
+            g_signal_connect(priv->proxy, "notify::capabilities",
+            G_CALLBACK(gsupplicant_interface_notify_caps), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_COUNTRY] =
+            g_signal_connect(priv->proxy, "notify::country",
+            G_CALLBACK(gsupplicant_interface_notify_country), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_DRIVER] =
+            g_signal_connect(priv->proxy, "notify::driver",
+            G_CALLBACK(gsupplicant_interface_notify_driver), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_IFNAME] =
+            g_signal_connect(priv->proxy, "notify::ifname",
+            G_CALLBACK(gsupplicant_interface_notify_ifname), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_BRIDGE_IFNAME] =
+            g_signal_connect(priv->proxy, "notify::bridge-ifname",
+            G_CALLBACK(gsupplicant_interface_notify_bridge_ifname), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_CURRENT_BSS] =
+            g_signal_connect(priv->proxy, "notify::current-bss",
+            G_CALLBACK(gsupplicant_interface_notify_current_bss), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_CURRENT_NETWORK] =
+            g_signal_connect(priv->proxy, "notify::current-network",
+            G_CALLBACK(gsupplicant_interface_notify_current_network), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_BSSS] =
+            g_signal_connect(priv->proxy, "notify::bsss",
+            G_CALLBACK(gsupplicant_interface_notify_bsss), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_NETWORKS] =
+            g_signal_connect(priv->proxy, "notify::networks",
+            G_CALLBACK(gsupplicant_interface_notify_networks), self);
 
         priv->supplicant_handler_id[SUPPLICANT_VALID_CHANGED] =
             gsupplicant_add_handler(self->supplicant,
