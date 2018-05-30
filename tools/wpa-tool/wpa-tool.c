@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 Jolla Ltd.
+ * Copyright (C) 2015-2018 Jolla Ltd.
  * Contact: Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
@@ -930,8 +930,8 @@ supplicant_valid(
                         network_valid_handler, app);
             }
         }
-        if (app->dump_properties) {
-            if (!app->iface_path && !app->bss_path && !app->network_path) {
+        if (!app->iface_path && !app->bss_path && !app->network_path) {
+            if (app->dump_properties) {
                 printf("Interfaces:");
                 if (sup->interfaces) {
                     const char* delimiter = " ";
