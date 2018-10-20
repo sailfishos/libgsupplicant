@@ -1,3 +1,14 @@
+libgsupplicant (1.0.11) unstable; urgency=low
+
+  * Added new macros
+
+    gsupplicant_bss_remove_all_handlers
+    gsupplicant_interface_remove_all_handlers
+    gsupplicant_network_remove_all_handlers
+    gsupplicant_remove_all_handlers
+
+ -- Slava Monich <slava.monich@jolla.com>  Sat, 20 Oct 2018 13:37:58 +0300
+
 libgsupplicant (1.0.10) unstable; urgency=low
 
   * Compatibility with glib 2.56
