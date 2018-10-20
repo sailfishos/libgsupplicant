@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2018 Jolla Ltd.
- * Contact: Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2015-2018 Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -13,9 +13,9 @@
  *   2. Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in the
  *      documentation and/or other materials provided with the distribution.
- *   3. Neither the name of Jolla Ltd nor the names of its contributors may
- *      be used to endorse or promote products derived from this software
- *      without specific prior written permission.
+ *   3. Neither the names of the copyright holders nor the names of its
+ *      contributors may be used to endorse or promote products derived from
+ *      this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -1145,8 +1145,8 @@ gsupplicant_interface_add_network_call_dispose(
 {
     /* May be invoked twice */
     if (call->network) {
-        gsupplicant_network_remove_handlers(call->network,
-            call->network_event_id, G_N_ELEMENTS(call->network_event_id));
+        gsupplicant_network_remove_all_handlers(call->network,
+            call->network_event_id);
         gsupplicant_network_unref(call->network);
         call->network = NULL;
     }
