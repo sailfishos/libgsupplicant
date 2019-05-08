@@ -86,6 +86,8 @@ typedef struct gsupplicant_interface_add_network_call {
     GCancellable* cancel;
     gulong cancel_id;
     GVariant* args;
+    GHashTable* blobs;
+    GHashTableIter iter;
     gboolean pending;
     GSupplicantInterfaceStringResultFunc fn;
     GDestroyNotify destroy;
@@ -429,7 +431,8 @@ static
 void
 gsupplicant_interface_add_network_args_security_peap(
     GVariantBuilder* builder,
-    const GSupplicantNetworkParams* np)
+    const GSupplicantNetworkParams* np,
+    GHashTable* blobs)
 {
     /*
      * Multiple protocols in phase2 should be allowed,
@@ -438,9 +441,11 @@ gsupplicant_interface_add_network_args_security_peap(
      */
     if (np->phase2 != GSUPPLICANT_EAP_METHOD_NONE) {
         const char* ca_cert2 =
-            gsupplicant_check_abs_path(np->ca_cert_file2);
+            gsupplicant_check_blob_or_abs_path(np->ca_cert_file2,
+                blobs);
         const char* client_cert2 =
-            gsupplicant_check_abs_path(np->client_cert_file2);
+            gsupplicant_check_blob_or_abs_path(np->client_cert_file2,
+                blobs);
         const char* auth = (np->auth_flags & GSUPPLICANT_AUTH_PHASE2_AUTHEAP) ?
             "autheap" : "auth";
         GString* buf = g_string_new(NULL);
@@ -463,7 +468,8 @@ gsupplicant_interface_add_network_args_security_peap(
         if (client_cert2) {
             if (np->private_key_file2 && np->private_key_file2[0]) {
                 const char* private_key2 =
-                    gsupplicant_check_abs_path(np->private_key_file2);
+                    gsupplicant_check_blob_or_abs_path(np->private_key_file2,
+                        blobs);
                 if (private_key2) {
                     gsupplicant_dict_add_string(builder, "client_cert2",
                         client_cert2);
@@ -489,11 +495,14 @@ static
 void
 gsupplicant_interface_add_network_args_security_eap(
     GVariantBuilder* builder,
-    const GSupplicantNetworkParams* np)
+    const GSupplicantNetworkParams* np,
+    GHashTable* blobs)
 {
     guint found;
-    const char* ca_cert = gsupplicant_check_abs_path(np->ca_cert_file);
-    const char* client_cert = gsupplicant_check_abs_path(np->client_cert_file);
+    const char* ca_cert =
+        gsupplicant_check_blob_or_abs_path(np->ca_cert_file, blobs);
+    const char* client_cert =
+        gsupplicant_check_blob_or_abs_path(np->client_cert_file, blobs);
     const char* method = gsupplicant_eap_method_name(np->eap, &found);
     GASSERT(found == np->eap); /* Only one method should be specified */
     gsupplicant_dict_add_string_ne(builder, "eap", method);
@@ -503,7 +512,7 @@ gsupplicant_interface_add_network_args_security_eap(
         return;
     case GSUPPLICANT_EAP_METHOD_PEAP:
     case GSUPPLICANT_EAP_METHOD_TTLS:
-        gsupplicant_interface_add_network_args_security_peap(builder, np);
+        gsupplicant_interface_add_network_args_security_peap(builder, np, blobs);
         break;
     case GSUPPLICANT_EAP_METHOD_TLS:
         break;
@@ -519,7 +528,8 @@ gsupplicant_interface_add_network_args_security_eap(
     if (client_cert) {
         if (np->private_key_file && np->private_key_file[0]) {
             const char* private_key =
-                gsupplicant_check_abs_path(np->private_key_file);
+                gsupplicant_check_blob_or_abs_path(np->private_key_file,
+                    blobs);
             if (private_key) {
                 gsupplicant_dict_add_string(builder, "client_cert",
                     client_cert);
@@ -589,7 +599,8 @@ gsupplicant_interface_add_network_args_security_proto(
 static
 GVariant*
 gsupplicant_interface_add_network_args_new(
-    const GSupplicantNetworkParams* np)
+    const GSupplicantNetworkParams* np,
+    GHashTable* blobs)
 {
     const char* key_mgmt = NULL;
     const char* auth_alg = NULL;
@@ -625,7 +636,7 @@ gsupplicant_interface_add_network_args_new(
     case GSUPPLICANT_SECURITY_EAP:
         GDEBUG_("EAP security");
         key_mgmt = "WPA-EAP";
-        gsupplicant_interface_add_network_args_security_eap(&builder, np);
+        gsupplicant_interface_add_network_args_security_eap(&builder, np, blobs);
         gsupplicant_interface_add_network_args_security_proto(&builder, np);
         gsupplicant_interface_add_network_args_security_ciphers(&builder, np);
         break;
@@ -1167,6 +1178,9 @@ gsupplicant_interface_add_network_call_free(
     if (call->cancel_id) {
         g_cancellable_disconnect(call->cancel, call->cancel_id);
     }
+    if (call->blobs) {
+        g_hash_table_unref(call->blobs);
+    }
     g_object_unref(call->cancel);
     g_free(call->path);
     if (call->destroy) {
@@ -1265,6 +1279,7 @@ gsupplicant_interface_add_network_call_new(
     GCancellable* cancel,
     const GSupplicantNetworkParams* np,
     guint flags,
+    GHashTable* blobs,
     GSupplicantInterfaceStringResultFunc fn,
     GDestroyNotify destroy,
     void* data)
@@ -1275,7 +1290,11 @@ gsupplicant_interface_add_network_call_new(
     call->cancel_id = g_cancellable_connect(call->cancel,
         G_CALLBACK(gsupplicant_interface_add_network_call_cancelled),
         call, NULL);
-    call->args = gsupplicant_interface_add_network_args_new(np);
+    if (blobs && g_hash_table_size(blobs)) {
+        call->blobs = g_hash_table_ref(blobs);
+        g_hash_table_iter_init(&call->iter, call->blobs);
+    }
+    call->args = gsupplicant_interface_add_network_args_new(np, call->blobs);
     call->iface = gsupplicant_interface_ref(iface);
     call->fn = fn;
     call->destroy = destroy;
@@ -2437,6 +2456,80 @@ gsupplicant_interface_reattach(
 
 static /* should be public? */
 GCancellable*
+gsupplicant_interface_add_blob_full(
+    GSupplicantInterface* self,
+    GCancellable* cancel,
+    const char* name,
+    GBytes* blob,
+    GSupplicantInterfaceResultFunc fn,
+    GDestroyNotify free,
+    void* data)
+{
+    if (G_LIKELY(self) && self->valid && name && blob) {
+        GSupplicantInterfacePriv* priv = self->priv;
+        GSupplicantInterfaceCall* call = gsupplicant_interface_call_new(self,
+            cancel, gsupplicant_interface_call_finish_void, G_CALLBACK(fn),
+            free, data);
+        gsize size = 0;
+        const guint8* data = g_bytes_get_data(blob, &size);
+        fi_w1_wpa_supplicant1_interface_call_add_blob(
+            priv->proxy,
+            name,
+            g_variant_new_fixed_array(
+                G_VARIANT_TYPE_BYTE, data, size, 1),
+            call->cancel,
+            gsupplicant_interface_call_finished, call);
+        return call->cancel;
+    }
+    gsupplicant_cancel_later(cancel);
+    return NULL;
+}
+
+GCancellable*
+gsupplicant_interface_add_blob(
+    GSupplicantInterface* self,
+    GCancellable* cancel,
+    const char* name,
+    GBytes* blob,
+    GSupplicantInterfaceResultFunc fn,
+    void* data)
+{
+    return gsupplicant_interface_add_blob_full(self, cancel, name, blob,
+        fn, NULL, data);
+}
+
+static /* should be public? */
+GCancellable*
+gsupplicant_interface_remove_blob_full(
+    GSupplicantInterface* self,
+    GCancellable* cancel,
+    const char* name,
+    GSupplicantInterfaceResultFunc fn,
+    GDestroyNotify free,
+    void* data)
+{
+    if (name) {
+        return gsupplicant_interface_call_string_void(self, cancel, name, fn,
+            free, data, fi_w1_wpa_supplicant1_interface_call_remove_blob);
+    }
+    gsupplicant_cancel_later(cancel);
+    return NULL;
+}
+
+GCancellable*
+gsupplicant_interface_remove_blob(
+    GSupplicantInterface* self,
+    GCancellable* cancel,
+    const char* name,
+    GSupplicantInterfaceResultFunc fn,
+    void* data)
+{
+    return gsupplicant_interface_remove_blob_full(self, cancel, name,
+        fn, NULL, data);
+}
+
+static /* should be public? */
+GCancellable*
 gsupplicant_interface_select_network_full(
     GSupplicantInterface* self,
     GCancellable* cancel,
@@ -2797,6 +2890,47 @@ gsupplicant_interface_add_network1(
 
 static
 void
+gsupplicant_interface_add_network_pre1(
+    GObject* obj,
+    GAsyncResult* result,
+    gpointer data) {
+
+    GError* error = NULL;
+    GSupplicantInterfaceAddNetworkCall* call = data;
+    FiW1Wpa_supplicant1Interface* proxy = call->iface->priv->proxy;
+    GASSERT(proxy == FI_W1_WPA_SUPPLICANT1_INTERFACE(obj));
+
+    if (fi_w1_wpa_supplicant1_interface_call_add_blob_finish(proxy,
+        result, &error)) {
+        gpointer name, blob;
+
+        if (g_hash_table_iter_next(&call->iter, &name, &blob)) {
+            gsize size = 0;
+            const guint8* data = g_bytes_get_data(blob, &size);
+
+            fi_w1_wpa_supplicant1_interface_call_add_blob(
+                    proxy,
+                    name,
+                    g_variant_new_fixed_array(
+                        G_VARIANT_TYPE_BYTE, data, size, 1),
+                    call->cancel,
+                    gsupplicant_interface_add_network_pre1, call);
+        } else {
+            g_hash_table_unref(call->blobs);
+            call->blobs = NULL;
+            fi_w1_wpa_supplicant1_interface_call_add_network(proxy,
+                    call->args, call->cancel, gsupplicant_interface_add_network1,
+                    call);
+            g_variant_unref(call->args);
+            call->args = NULL;
+        }
+    }
+    if (error) {
+        g_error_free(error);
+    }
+}
+static
+void
 gsupplicant_interface_add_network0(
     GObject* obj,
     GAsyncResult* result,
@@ -2810,10 +2944,27 @@ gsupplicant_interface_add_network0(
         result, &error)) {
         GVERBOSE_("removed all networks");
         call->pending = TRUE;
-        fi_w1_wpa_supplicant1_interface_call_add_network(proxy, call->args,
-            call->cancel, gsupplicant_interface_add_network1, call);
-        g_variant_unref(call->args);
-        call->args = NULL;
+        if (call->blobs) {
+            gpointer name, blob;
+            gsize size = 0;
+            const guint8* data;
+
+            g_hash_table_iter_next(&call->iter, &name, &blob);
+            data = g_bytes_get_data(blob, &size);
+
+            fi_w1_wpa_supplicant1_interface_call_add_blob(
+                proxy,
+                name,
+                g_variant_new_fixed_array(
+                    G_VARIANT_TYPE_BYTE, data, size, 1),
+                call->cancel,
+                gsupplicant_interface_add_network_pre1, call);
+        } else {
+            fi_w1_wpa_supplicant1_interface_call_add_network(proxy, call->args,
+                call->cancel, gsupplicant_interface_add_network1, call);
+            g_variant_unref(call->args);
+            call->args = NULL;
+        }
     } else {
         call->pending = FALSE;
         gsupplicant_interface_call_add_network_finish(call, error);
@@ -2821,6 +2972,103 @@ gsupplicant_interface_add_network0(
     if (error) {
         g_error_free(error);
     }
+}
+
+static
+void
+gsupplicant_interface_add_network_pre0(
+    GObject* obj,
+    GAsyncResult* result,
+    gpointer data)
+{
+    GError* error = NULL;
+    GSupplicantInterfaceAddNetworkCall* call = data;
+    FiW1Wpa_supplicant1Interface* proxy = call->iface->priv->proxy;
+    GASSERT(proxy == FI_W1_WPA_SUPPLICANT1_INTERFACE(obj));
+    if (fi_w1_wpa_supplicant1_interface_call_remove_blob_finish(proxy,
+        result, &error)) {
+            GVariantIter blobi;
+            GVariant* blobs = fi_w1_wpa_supplicant1_interface_get_blobs(proxy);
+            if (g_variant_iter_init(&blobi, blobs)) {
+                const char* blobn;
+                g_variant_iter_next(&blobi, "{&s@ay}", &blobn, NULL);
+                fi_w1_wpa_supplicant1_interface_call_remove_blob(
+                    proxy, blobn,
+                    call->cancel, gsupplicant_interface_add_network_pre0,
+                    call);
+            } else {
+                fi_w1_wpa_supplicant1_interface_call_remove_all_networks(
+                    proxy, call->cancel, gsupplicant_interface_add_network0,
+                    call);
+            }
+    } else {
+        call->pending = FALSE;
+        gsupplicant_interface_call_add_network_finish(call, error);
+    }
+    g_clear_error(&error);
+}
+
+GCancellable*
+gsupplicant_interface_add_network_full2(
+    GSupplicantInterface* self,
+    GCancellable* cancel,
+    const GSupplicantNetworkParams* np,
+    guint flags,
+    GHashTable* blobs,
+    GSupplicantInterfaceStringResultFunc fn,
+    GDestroyNotify destroy,
+    void* data)
+{
+    if (G_LIKELY(self) && self->valid && np) {
+        GSupplicantInterfacePriv* priv = self->priv;
+        GSupplicantInterfaceAddNetworkCall* call =
+            gsupplicant_interface_add_network_call_new(self, cancel, np,
+                flags, blobs, fn, destroy, data);
+        call->pending = TRUE;
+
+        if (flags & GSUPPLICANT_ADD_NETWORK_DELETE_OTHER) {
+            GVariantIter blobi;
+            GVariant* old_blobs = fi_w1_wpa_supplicant1_interface_get_blobs(priv->proxy);
+            if (g_variant_iter_init(&blobi, old_blobs)) {
+                const char *blobn;
+                g_variant_iter_next(&blobi, "{&s@ay}", &blobn, NULL);
+                fi_w1_wpa_supplicant1_interface_call_remove_blob(
+                    priv->proxy, blobn,
+                    call->cancel, gsupplicant_interface_add_network_pre0,
+                    call);
+            } else {
+                fi_w1_wpa_supplicant1_interface_call_remove_all_networks(
+                    priv->proxy, call->cancel, gsupplicant_interface_add_network0,
+                    call);
+            }
+        } else {
+            if (call->blobs) {
+                gpointer name, blob;
+                gsize size = 0;
+                const guint8* data;
+
+                g_hash_table_iter_next(&call->iter, &name, &blob);
+                data = g_bytes_get_data(blob, &size);
+
+                fi_w1_wpa_supplicant1_interface_call_add_blob(
+                    priv->proxy,
+                    name,
+                    g_variant_new_fixed_array(
+                        G_VARIANT_TYPE_BYTE, data, size, 1),
+                    call->cancel,
+                    gsupplicant_interface_add_network_pre1, call);
+            } else {
+                fi_w1_wpa_supplicant1_interface_call_add_network(priv->proxy,
+                    call->args, call->cancel, gsupplicant_interface_add_network1,
+                    call);
+                g_variant_unref(call->args);
+                call->args = NULL;
+            }
+        }
+        return call->cancel;
+    }
+    gsupplicant_cancel_later(cancel);
+    return NULL;
 }
 
 GCancellable*
@@ -2833,27 +3081,8 @@ gsupplicant_interface_add_network_full(
     GDestroyNotify destroy,
     void* data)
 {
-    if (G_LIKELY(self) && self->valid && np) {
-        GSupplicantInterfacePriv* priv = self->priv;
-        GSupplicantInterfaceAddNetworkCall* call =
-            gsupplicant_interface_add_network_call_new(self, cancel, np,
-                flags, fn, destroy, data);
-        call->pending = TRUE;
-        if (flags & GSUPPLICANT_ADD_NETWORK_DELETE_OTHER) {
-            fi_w1_wpa_supplicant1_interface_call_remove_all_networks(
-                priv->proxy, call->cancel, gsupplicant_interface_add_network0,
-                call);
-        } else {
-            fi_w1_wpa_supplicant1_interface_call_add_network(priv->proxy,
-                call->args, call->cancel, gsupplicant_interface_add_network1,
-                call);
-            g_variant_unref(call->args);
-            call->args = NULL;
-        }
-        return call->cancel;
-    }
-    gsupplicant_cancel_later(cancel);
-    return NULL;
+    return gsupplicant_interface_add_network_full2(self, cancel, np, flags,
+        NULL, fn, destroy, data);
 }
 
 GCancellable*
