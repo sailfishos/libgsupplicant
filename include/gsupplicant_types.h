@@ -137,9 +137,11 @@ typedef enum gsupplicant_eap_method {
     GSUPPLICANT_EAP_METHOD_PWD          = (0x00040000)
 } GSUPPLICANT_EAP_METHOD;
 
-typedef enum gsupplicant_auth_fags {
+typedef enum gsupplicant_auth_flags {
     GSUPPLICANT_AUTH_DEFAULT            = (0x00000000),
-    GSUPPLICANT_AUTH_PHASE2_AUTHEAP     = (0x00000001)
+    GSUPPLICANT_AUTH_PHASE2_AUTHEAP     = (0x00000001),
+    GSUPPLICANT_AUTH_PHASE1_PEAPV0      = (0x00000002), /* Since 1.0.12 */
+    GSUPPLICANT_AUTH_PHASE1_PEAPV1      = (0x00000004)  /* Since 1.0.12 */
 } GSUPPLICANT_AUTH_FLAGS;
 
 typedef enum gsupplicant_op_mode {

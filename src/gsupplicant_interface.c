@@ -434,6 +434,22 @@ gsupplicant_interface_add_network_args_security_peap(
     const GSupplicantNetworkParams* np,
     GHashTable* blobs)
 {
+    if (np->eap == GSUPPLICANT_EAP_METHOD_PEAP) {
+        switch (np->auth_flags &
+                (GSUPPLICANT_AUTH_PHASE1_PEAPV0 |
+                 GSUPPLICANT_AUTH_PHASE1_PEAPV1)) {
+        case GSUPPLICANT_AUTH_PHASE1_PEAPV0:
+            gsupplicant_dict_add_string(builder, "phase1", "peapver=0");
+            break;
+        case GSUPPLICANT_AUTH_PHASE1_PEAPV1:
+            gsupplicant_dict_add_string(builder, "phase1", "peapver=1");
+            break;
+        default:
+            GWARN("Trying to force PEAPv0 and v1, ignoring");
+        case 0:
+            break;
+        }
+    }
     /*
      * Multiple protocols in phase2 should be allowed,
      * e.g "autheap=MSCHAPV2 autheap=MD5" for EAP-TTLS
