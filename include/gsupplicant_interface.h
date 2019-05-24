@@ -331,6 +331,23 @@ gsupplicant_interface_reattach(
     GSupplicantInterfaceResultFunc fn,
     void* data);
 
+GCancellable*
+gsupplicant_interface_add_blob(
+    GSupplicantInterface* self,
+    GCancellable* cancel,
+    const char* name,
+    GBytes* blob,
+    GSupplicantInterfaceResultFunc fn,
+    void* data); /* Since 1.0.12 */
+
+GCancellable*
+gsupplicant_interface_remove_blob(
+    GSupplicantInterface* iface,
+    GCancellable* cancel,
+    const char* name,
+    GSupplicantInterfaceResultFunc fn,
+    void* data); /* Since 1.0.12 */
+
 #define GSUPPLICANT_ADD_NETWORK_DELETE_OTHER  (0x01)
 #define GSUPPLICANT_ADD_NETWORK_SELECT        (0x02)
 #define GSUPPLICANT_ADD_NETWORK_ENABLE        (0x04)
@@ -352,6 +369,17 @@ gsupplicant_interface_add_network_full(
     GSupplicantInterfaceStringResultFunc fn,
     GDestroyNotify destroy,
     void* data);
+
+GCancellable*
+gsupplicant_interface_add_network_full2(
+    GSupplicantInterface* iface,
+    GCancellable* cancel,
+    const GSupplicantNetworkParams* params,
+    guint flags, /* See above */
+    GHashTable* blobs, /* char * => gbytes * */
+    GSupplicantInterfaceStringResultFunc fn,
+    GDestroyNotify destroy,
+    void* data); /* Since 1.0.12 */
 
 GCancellable*
 gsupplicant_interface_select_network(

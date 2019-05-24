@@ -120,6 +120,11 @@ const char*
 gsupplicant_check_abs_path(
     const char* path);
 
+const char*
+gsupplicant_check_blob_or_abs_path(
+    const char* path,
+    GHashTable* blobs);
+
 int
 gsupplicant_dict_parse(
     GVariant* dict,

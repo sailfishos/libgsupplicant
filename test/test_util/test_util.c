@@ -352,6 +352,47 @@ test_util_abs_path(
 }
 
 /*==========================================================================*
+ * blob_or_abs_path
+ *==========================================================================*/
+
+static
+void
+test_util_blob_or_abs_path(
+    void)
+{
+    char* name = NULL;
+    int fd;
+    GHashTable *ht = g_hash_table_new(g_str_hash, g_str_equal);
+
+    g_assert(!gsupplicant_check_blob_or_abs_path(NULL, ht));
+    g_assert(!gsupplicant_check_blob_or_abs_path(NULL, NULL));
+    g_assert(!gsupplicant_check_blob_or_abs_path("", ht));
+    g_assert(!gsupplicant_check_blob_or_abs_path("foo", ht));
+    g_assert(!gsupplicant_check_blob_or_abs_path("blob://foo", NULL));
+    g_assert(!gsupplicant_check_blob_or_abs_path("blob://foo", ht));
+
+    g_hash_table_insert(ht, "foo", "bar");
+    g_assert(gsupplicant_check_blob_or_abs_path("blob://foo", ht));
+    g_assert(!gsupplicant_check_blob_or_abs_path("blob://bar", ht));
+
+    fd = g_file_open_tmp("test-abspath-XXXXXX", &name, NULL);
+    g_assert(fd >= 0);
+    GDEBUG_("%s", name);
+    g_assert(close(fd) == 0);
+
+    /* Now a file should exist (albeit empty), the check should pass */
+    g_assert(gsupplicant_check_blob_or_abs_path(name, NULL));
+    g_assert(gsupplicant_check_blob_or_abs_path(name, ht));
+
+    /* When the file is missing, the check should fail */
+    g_assert(g_unlink(name) == 0);
+    g_assert(!gsupplicant_check_blob_or_abs_path(name, NULL));
+    g_assert(!gsupplicant_check_blob_or_abs_path(name, ht));
+    g_free(name);
+    g_hash_table_unref(ht);
+}
+
+/*==========================================================================*
  * dict_parse
  *==========================================================================*/
 
@@ -557,6 +598,7 @@ int main(int argc, char* argv[])
     g_test_add_func(TEST_PREFIX "call_later", test_util_call_later);
     g_test_add_func(TEST_PREFIX "cancel_later", test_util_cancel_later);
     g_test_add_func(TEST_PREFIX "abs_path", test_util_abs_path);
+    g_test_add_func(TEST_PREFIX "blob_or_abs_path", test_util_blob_or_abs_path);
     g_test_add_func(TEST_PREFIX "dict_parse", test_util_dict_parse);
     g_test_add_func(TEST_PREFIX "utf8_from_bytes", test_util_utf8_from_bytes);
     for (i = 0; i < G_N_ELEMENTS(test_util_utf8_data); i++) {

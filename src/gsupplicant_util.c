@@ -290,6 +290,27 @@ gsupplicant_check_abs_path(
     return NULL;
 }
 
+const char*
+gsupplicant_check_blob_or_abs_path(
+    const char* path,
+    GHashTable* blobs)
+{
+    if (path && path[0]) {
+        const char* blob_prefix = "blob://";
+        if (!g_str_has_prefix(path, blob_prefix)) {
+            return gsupplicant_check_abs_path(path);
+        } else if (blobs) {
+            if (g_hash_table_contains(blobs, path + strlen(blob_prefix))) {
+                return path;
+            } else {
+                GWARN("No such blob: %s", path);
+                return NULL;
+            }
+        }
+    }
+    return NULL;
+}
+
 int
 gsupplicant_dict_parse(
     GVariant* dict,
