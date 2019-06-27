@@ -37,6 +37,7 @@
 #include "gsupplicant_util_p.h"
 #include "gsupplicant_dbus.h"
 #include "gsupplicant_log.h"
+#include "gsupplicant_error.h"
 
 #include <gutil_strv.h>
 #include <gutil_misc.h>
@@ -3002,17 +3003,16 @@ gsupplicant_interface_add_network_pre0(
     FiW1Wpa_supplicant1Interface* proxy = call->iface->priv->proxy;
     GASSERT(proxy == FI_W1_WPA_SUPPLICANT1_INTERFACE(obj));
     if (fi_w1_wpa_supplicant1_interface_call_remove_blob_finish(proxy,
-        result, &error)) {
-            GVariantIter blobi;
-            GVariant* blobs = fi_w1_wpa_supplicant1_interface_get_blobs(proxy);
-            if (g_variant_iter_init(&blobi, blobs)) {
-                const char* blobn;
-                g_variant_iter_next(&blobi, "{&s@ay}", &blobn, NULL);
+            result, &error) ||
+        gsupplicant_is_error(error, GSUPPLICANT_ERROR_BLOB_UNKNOWN)) {
+            const gchar *name;
+            if (g_hash_table_iter_next(&call->iter, (gpointer*)&name, NULL)) {
                 fi_w1_wpa_supplicant1_interface_call_remove_blob(
-                    proxy, blobn,
+                    proxy, name,
                     call->cancel, gsupplicant_interface_add_network_pre0,
                     call);
             } else {
+                g_hash_table_iter_init(&call->iter, call->blobs);
                 fi_w1_wpa_supplicant1_interface_call_remove_all_networks(
                     proxy, call->cancel, gsupplicant_interface_add_network0,
                     call);
@@ -3043,13 +3043,10 @@ gsupplicant_interface_add_network_full2(
         call->pending = TRUE;
 
         if (flags & GSUPPLICANT_ADD_NETWORK_DELETE_OTHER) {
-            GVariantIter blobi;
-            GVariant* old_blobs = fi_w1_wpa_supplicant1_interface_get_blobs(priv->proxy);
-            if (g_variant_iter_init(&blobi, old_blobs)) {
-                const char *blobn;
-                g_variant_iter_next(&blobi, "{&s@ay}", &blobn, NULL);
+            const gchar *name;
+            if (blobs && g_hash_table_iter_next(&call->iter, (gpointer*)&name, NULL)) {
                 fi_w1_wpa_supplicant1_interface_call_remove_blob(
-                    priv->proxy, blobn,
+                    priv->proxy, name,
                     call->cancel, gsupplicant_interface_add_network_pre0,
                     call);
             } else {
