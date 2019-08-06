@@ -1,3 +1,9 @@
+libgsupplicant (1.0.14) unstable; urgency=low
+
+  * Plugged GSupplicant reference leak
+
+ -- Slava Monich <slava.monich@jolla.com>  Tue, 06 Aug 2019 14:44:00 +0300
+
 libgsupplicant (1.0.13) unstable; urgency=low
 
   * Clear only blobs that are being set

@@ -1,15 +1,18 @@
 Name: libgsupplicant
-Version: 1.0.13
+Version: 1.0.14
 Release: 0
 Summary: Client library for wpa_supplicant
 Group: Development/Libraries
 License: BSD
 URL: https://git.merproject.org/mer-core/libgsupplicant
 Source: %{name}-%{version}.tar.bz2
+
+%define libglibutil_version 1.0.21
+
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(gio-2.0)
-BuildRequires: pkgconfig(libglibutil) >= 1.0.21
-Requires: libglibutil >= 1.0.21
+BuildRequires: pkgconfig(libglibutil) >= %{libglibutil_version}
+Requires: libglibutil >= %{libglibutil_version}
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 
