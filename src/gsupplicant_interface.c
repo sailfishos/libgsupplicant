@@ -520,6 +520,8 @@ gsupplicant_interface_add_network_args_security_eap(
         gsupplicant_check_blob_or_abs_path(np->ca_cert_file, blobs);
     const char* client_cert =
         gsupplicant_check_blob_or_abs_path(np->client_cert_file, blobs);
+    const char* private_key =
+        gsupplicant_check_blob_or_abs_path(np->private_key_file, blobs);
     const char* method = gsupplicant_eap_method_name(np->eap, &found);
     GASSERT(found == np->eap); /* Only one method should be specified */
     gsupplicant_dict_add_string_ne(builder, "eap", method);
@@ -543,21 +545,18 @@ gsupplicant_interface_add_network_args_security_eap(
     gsupplicant_dict_add_string_ne(builder, "password", np->passphrase);
     gsupplicant_dict_add_string0(builder, "ca_cert", ca_cert);
     if (client_cert) {
-        if (np->private_key_file && np->private_key_file[0]) {
-            const char* private_key =
-                gsupplicant_check_blob_or_abs_path(np->private_key_file,
-                    blobs);
-            if (private_key) {
-                gsupplicant_dict_add_string(builder, "client_cert",
-                    client_cert);
-                gsupplicant_dict_add_string(builder, "private_key",
-                    private_key);
-                gsupplicant_dict_add_string_ne(builder, "private_key_passwd",
-                    np->private_key_passphrase);
-            }
+        if (private_key) {
+            gsupplicant_dict_add_string(builder, "client_cert",
+                client_cert);
         } else {
             GWARN("Missing private key");
         }
+    }
+    if (private_key) {
+        gsupplicant_dict_add_string(builder, "private_key",
+            private_key);
+        gsupplicant_dict_add_string_ne(builder, "private_key_passwd",
+            np->private_key_passphrase);
     }
     gsupplicant_dict_add_string_ne(builder, "domain_match",
         np->domain_match);
