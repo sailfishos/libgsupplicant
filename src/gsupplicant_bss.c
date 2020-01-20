@@ -1494,7 +1494,9 @@ gsupplicant_bss_class_init(
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
     object_class->dispose = gsupplicant_bss_dispose;
     object_class->finalize = gsupplicant_bss_finalize;
+    G_GNUC_BEGIN_IGNORE_DEPRECATIONS
     g_type_class_add_private(klass, sizeof(GSupplicantBSSPriv));
+    G_GNUC_END_IGNORE_DEPRECATIONS
     for (i=0; i<SIGNAL_PROPERTY_CHANGED; i++) {
         gsupplicant_bss_signals[i] =  g_signal_new(
             gsupplicant_bss_signame[i], G_OBJECT_CLASS_TYPE(klass),
