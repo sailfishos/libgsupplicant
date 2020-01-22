@@ -1,3 +1,9 @@
+libgsupplicant (1.0.15) unstable; urgency=low
+
+  * Allow use of private key without client certificate
+
+ -- Santtu Lakkala <santtu.lakkala@jolla.com>  Wed, 22 Jan 2020 13:30:45 +0200
+
 libgsupplicant (1.0.14) unstable; urgency=low
 
   * Plugged GSupplicant reference leak
