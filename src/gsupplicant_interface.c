@@ -520,6 +520,8 @@ gsupplicant_interface_add_network_args_security_eap(
         gsupplicant_check_blob_or_abs_path(np->ca_cert_file, blobs);
     const char* client_cert =
         gsupplicant_check_blob_or_abs_path(np->client_cert_file, blobs);
+    const char* private_key =
+        gsupplicant_check_blob_or_abs_path(np->private_key_file, blobs);
     const char* method = gsupplicant_eap_method_name(np->eap, &found);
     GASSERT(found == np->eap); /* Only one method should be specified */
     gsupplicant_dict_add_string_ne(builder, "eap", method);
@@ -543,21 +545,18 @@ gsupplicant_interface_add_network_args_security_eap(
     gsupplicant_dict_add_string_ne(builder, "password", np->passphrase);
     gsupplicant_dict_add_string0(builder, "ca_cert", ca_cert);
     if (client_cert) {
-        if (np->private_key_file && np->private_key_file[0]) {
-            const char* private_key =
-                gsupplicant_check_blob_or_abs_path(np->private_key_file,
-                    blobs);
-            if (private_key) {
-                gsupplicant_dict_add_string(builder, "client_cert",
-                    client_cert);
-                gsupplicant_dict_add_string(builder, "private_key",
-                    private_key);
-                gsupplicant_dict_add_string_ne(builder, "private_key_passwd",
-                    np->private_key_passphrase);
-            }
+        if (private_key) {
+            gsupplicant_dict_add_string(builder, "client_cert",
+                client_cert);
         } else {
             GWARN("Missing private key");
         }
+    }
+    if (private_key) {
+        gsupplicant_dict_add_string(builder, "private_key",
+            private_key);
+        gsupplicant_dict_add_string_ne(builder, "private_key_passwd",
+            np->private_key_passphrase);
     }
     gsupplicant_dict_add_string_ne(builder, "domain_match",
         np->domain_match);
@@ -3235,7 +3234,9 @@ gsupplicant_interface_class_init(
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
     object_class->dispose = gsupplicant_interface_dispose;
     object_class->finalize = gsupplicant_interface_finalize;
+    G_GNUC_BEGIN_IGNORE_DEPRECATIONS
     g_type_class_add_private(klass, sizeof(GSupplicantInterfacePriv));
+    G_GNUC_END_IGNORE_DEPRECATIONS
     for (i=0; i<SIGNAL_PROPERTY_CHANGED; i++) {
         gsupplicant_interface_signals[i] =  g_signal_new(
             gsupplicant_interface_signame[i], G_OBJECT_CLASS_TYPE(klass),

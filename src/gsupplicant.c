@@ -939,7 +939,9 @@ gsupplicant_class_init(
 {
     int i;
     G_OBJECT_CLASS(klass)->finalize = gsupplicant_finalize;
+    G_GNUC_BEGIN_IGNORE_DEPRECATIONS
     g_type_class_add_private(klass, sizeof(GSupplicantPriv));
+    G_GNUC_END_IGNORE_DEPRECATIONS
     for (i=0; i<SIGNAL_PROPERTY_CHANGED; i++) {
         gsupplicant_signals[i] =  g_signal_new(gsupplicant_signame[i],
             G_OBJECT_CLASS_TYPE(klass), G_SIGNAL_RUN_FIRST,
