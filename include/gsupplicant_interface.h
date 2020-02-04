@@ -73,6 +73,17 @@ typedef enum gsupplicant_interface_property {
     GSUPPLICANT_INTERFACE_PROPERTY_COUNT
 } GSUPPLICANT_INTERFACE_PROPERTY;
 
+typedef enum gsupplicant_interface_eap_event {
+    GSUPPLICANT_INTERFACE_EAP_REJECT_METHOD,
+    GSUPPLICANT_INTERFACE_EAP_ACCEPT_METHOD,
+    GSUPPLICANT_INTERFACE_EAP_REMOTE_CERT_REJECTED,
+    GSUPPLICANT_INTERFACE_EAP_REMOTE_CERT_ACCEPTED,
+    GSUPPLICANT_INTERFACE_EAP_PASSPHRASE_NEEDED,
+    GSUPPLICANT_INTERFACE_EAP_PARAM_NEEDED,
+    GSUPPLICANT_INTERFACE_EAP_FAILED,
+    GSUPPLICANT_INTERFACE_EAP_COMPLETED
+} GSUPPLICANT_INTERFACE_EAP_EVENT;
+
 typedef struct gsupplicant_interface_caps {
     GSUPPLICANT_KEYMGMT keymgmt;
     GSUPPLICANT_CIPHER pairwise;
@@ -258,6 +269,13 @@ void
     GCancellable* cancel,
     const GError* error,
     const GSupplicantSignalPoll* result,
+    void* data);
+
+typedef
+void
+(*GSupplicantInterfaceEapStatusFunc)(
+    GSupplicantInterface* iface,
+    GSUPPLICANT_INTERFACE_EAP_EVENT status,
     void* data);
 
 GSupplicantInterface*
@@ -462,6 +480,12 @@ gsupplicant_interface_signal_poll(
 const char*
 gsupplicant_interface_state_name(
     GSUPPLICANT_INTERFACE_STATE state);
+
+gulong
+gsupplicant_interface_add_eap_status_handler(
+    GSupplicantInterface* iface,
+    GSupplicantInterfaceEapStatusFunc fn,
+    void* data); /* Since: 1.0.17 */
 
 G_INLINE_FUNC const char*
 gsupplicant_interface_get_state_name(GSupplicantInterface* iface)
