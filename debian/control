@@ -8,11 +8,11 @@ Standards-Version: 3.8.4
 Package: libgsupplicant
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, libglibutil-dev (>= 1.0.21), ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Client library for wpa_supplicant
 
 Package: libgsupplicant-dev
 Section: libdevel
 Architecture: any
-Depends: libgsupplicant (= ${binary:Version}), ${misc:Depends}
+Depends: libgsupplicant (= ${binary:Version}), libglibutil-dev (>= 1.0.21), ${misc:Depends}
 Description: Development files for libgsupplicant
