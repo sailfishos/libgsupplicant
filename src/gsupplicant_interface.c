@@ -149,6 +149,7 @@ enum supplicant_interface_proxy_handler_id {
     PROXY_NOTIFY_CURRENT_NETWORK,
     PROXY_NOTIFY_BSSS,
     PROXY_NOTIFY_NETWORKS,
+    PROXY_EAP,
     PROXY_HANDLER_COUNT
 };
 
@@ -209,6 +210,7 @@ typedef enum gsupplicant_interface_signal {
     GSUPPLICANT_INTERFACE_PROPERTIES_(SIGNAL_ENUM_)
 #undef SIGNAL_ENUM_
     SIGNAL_PROPERTY_CHANGED,
+    SIGNAL_EAP,
     SIGNAL_COUNT
 } GSUPPLICANT_INTERFACE_SIGNAL;
 
@@ -226,6 +228,7 @@ G_STATIC_ASSERT((int)SIGNAL_PROPERTY_CHANGED ==
                ((int)GSUPPLICANT_INTERFACE_PROPERTY_COUNT-1));
 
 #define SIGNAL_PROPERTY_CHANGED_NAME            "property-changed"
+#define SIGNAL_EAP_NAME                         "eap-event"
 #define SIGNAL_PROPERTY_CHANGED_DETAIL          "%x"
 #define SIGNAL_PROPERTY_CHANGED_DETAIL_MAX_LEN  (8)
 
@@ -235,7 +238,8 @@ static const char* gsupplicant_interface_signame[] = {
 #define SIGNAL_NAME_(P,p) #p "-changed",
     GSUPPLICANT_INTERFACE_PROPERTIES_(SIGNAL_NAME_)
 #undef SIGNAL_NAME_
-    SIGNAL_PROPERTY_CHANGED_NAME
+    SIGNAL_PROPERTY_CHANGED_NAME,
+    SIGNAL_EAP_NAME
 };
 
 G_STATIC_ASSERT(G_N_ELEMENTS(gsupplicant_interface_signame) == SIGNAL_COUNT);
@@ -278,6 +282,22 @@ static const GSupNameIntPair gsupplicant_interface_states [] = {
     { "group_handshake",    GSUPPLICANT_INTERFACE_STATE_GROUP_HANDSHAKE },
     { "completed",          GSUPPLICANT_INTERFACE_STATE_COMPLETED },
     { "unknown",            GSUPPLICANT_INTERFACE_STATE_UNKNOWN }
+};
+
+/* EAP events */
+static struct {
+    const char* status;
+    const char* param;
+    GSUPPLICANT_INTERFACE_EAP_EVENT event;
+} gsupplicant_interface_eap_events [] = {
+    { "reject proposed method", NULL, GSUPPLICANT_INTERFACE_EAP_REJECT_METHOD },
+    { "accept proposed method", NULL, GSUPPLICANT_INTERFACE_EAP_ACCEPT_METHOD },
+    { "remote certificate verification", "success", GSUPPLICANT_INTERFACE_EAP_REMOTE_CERT_ACCEPTED },
+    { "remote certificate verification", NULL, GSUPPLICANT_INTERFACE_EAP_REMOTE_CERT_REJECTED },
+    { "eap parameter needed", "PASSPHRASE", GSUPPLICANT_INTERFACE_EAP_PASSPHRASE_NEEDED },
+    { "eap parameter needed", NULL, GSUPPLICANT_INTERFACE_EAP_PARAM_NEEDED },
+    { "completion", "success", GSUPPLICANT_INTERFACE_EAP_COMPLETED },
+    { "completion", NULL, GSUPPLICANT_INTERFACE_EAP_FAILED }
 };
 
 /*==========================================================================*
@@ -1971,6 +1991,32 @@ gsupplicant_interface_notify_networks(
 
 static
 void
+gsupplicant_interface_proxy_eap(
+    FiW1Wpa_supplicant1Interface* proxy,
+    const char* status,
+    const char* parameter,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    size_t i;
+
+    if (!status) {
+        return;
+    }
+
+    for (i = 0; i < G_N_ELEMENTS(gsupplicant_interface_eap_events); i++) {
+        if (!g_strcmp0(status, gsupplicant_interface_eap_events[i].status) &&
+                (!gsupplicant_interface_eap_events[i].param ||
+                 !g_strcmp0(parameter, gsupplicant_interface_eap_events[i].param))) {
+            g_signal_emit(self, gsupplicant_interface_signals[SIGNAL_EAP], 0,
+                    gsupplicant_interface_eap_events[i].event);
+            break;
+        }
+    }
+}
+
+static
+void
 gsupplicant_interface_proxy_bss_added(
     FiW1Wpa_supplicant1Interface* proxy,
     const char* path,
@@ -2197,6 +2243,9 @@ gsupplicant_interface_create2(
         priv->proxy_handler_id[PROXY_NOTIFY_NETWORKS] =
             g_signal_connect(priv->proxy, "notify::networks",
             G_CALLBACK(gsupplicant_interface_notify_networks), self);
+        priv->proxy_handler_id[PROXY_EAP] =
+            g_signal_connect(priv->proxy, "eap",
+            G_CALLBACK(gsupplicant_interface_proxy_eap), self);
 
         priv->supplicant_handler_id[SUPPLICANT_VALID_CHANGED] =
             gsupplicant_add_handler(self->supplicant,
@@ -3153,6 +3202,19 @@ gsupplicant_interface_state_name(
         G_N_ELEMENTS(gsupplicant_interface_states));
 }
 
+gulong
+gsupplicant_interface_add_eap_status_handler(
+    GSupplicantInterface* self,
+    GSupplicantInterfaceEapStatusFunc fn,
+    void* data) /* Since: 1.0.17 */
+{
+    if (G_LIKELY(self)) {
+        return g_signal_connect(self, SIGNAL_EAP_NAME, G_CALLBACK(fn), data);
+    }
+
+    return 0;
+}
+
 /*==========================================================================*
  * Internals
  *==========================================================================*/
@@ -3245,6 +3307,10 @@ gsupplicant_interface_class_init(
     gsupplicant_interface_signals[SIGNAL_PROPERTY_CHANGED] =
         g_signal_new(SIGNAL_PROPERTY_CHANGED_NAME, G_OBJECT_CLASS_TYPE(klass),
             G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED, 0, NULL, NULL, NULL,
+            G_TYPE_NONE, 1, G_TYPE_UINT);
+    gsupplicant_interface_signals[SIGNAL_EAP] =
+        g_signal_new(SIGNAL_EAP_NAME, G_OBJECT_CLASS_TYPE(klass),
+            G_SIGNAL_RUN_FIRST, 0, NULL, NULL, NULL,
             G_TYPE_NONE, 1, G_TYPE_UINT);
 }
 
