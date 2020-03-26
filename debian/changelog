@@ -1,3 +1,9 @@
+libgsupplicant (1.0.17) unstable; urgency=low
+
+  * Add EAP event signalling
+
+ -- Santtu Lakkala <santtu.lakkala@jolla.com>  Thu, 26 Mar 2020 09:58:31 +0200
+
 libgsupplicant (1.0.16) unstable; urgency=low
 
   * Fixed Debian dependencies
