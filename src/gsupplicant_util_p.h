@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015-2017 Jolla Ltd.
- * Contact: Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2015-2020 Jolla Ltd.
+ * Copyright (C) 2015-2020 Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -13,9 +13,9 @@
  *   2. Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions and the following disclaimer in the
  *      documentation and/or other materials provided with the distribution.
- *   3. Neither the name of Jolla Ltd nor the names of its contributors may
- *      be used to endorse or promote products derived from this software
- *      without specific prior written permission.
+ *   3. Neither the names of the copyright holders nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -33,6 +33,7 @@
 #ifndef GSUPPLICANT_UTIL_PRIVATE_H
 #define GSUPPLICANT_UTIL_PRIVATE_H
 
+#include "gsupplicant_types_p.h"
 #include <gsupplicant_util.h>
 #include <gio/gio.h>
 
@@ -54,138 +55,162 @@ gsupplicant_parse_bits_array(
     const char* name,
     GVariant* value,
     const GSupNameIntPair* map,
-    gsize count);
+    gsize count)
+    GSUPPLICANT_INTERNAL;
 
 const char*
 gsupplicant_name_int_find_bit(
     guint value,
     guint* bit,
     const GSupNameIntPair* list,
-    gsize count);
+    gsize count)
+    GSUPPLICANT_INTERNAL;
 
 const char*
 gsupplicant_name_int_find_int(
     guint value,
     const GSupNameIntPair* list,
-    gsize count);
+    gsize count)
+    GSUPPLICANT_INTERNAL;
 
 guint
 gsupplicant_name_int_get_int(
     const char* name,
     const GSupNameIntPair* list,
     gsize count,
-    guint default_value);
+    guint default_value)
+    GSUPPLICANT_INTERNAL;
 
 gboolean
 gsupplicant_name_int_set_bits(
     guint* bitmask,
     const char* name,
     const GSupNameIntPair* list,
-    gsize count);
+    gsize count)
+    GSUPPLICANT_INTERNAL;
 
 const GSupNameIntPair*
 gsupplicant_name_int_find_name(
     const char* name,
     const GSupNameIntPair* list,
-    gsize count);
+    gsize count)
+    GSUPPLICANT_INTERNAL;
 
 const GSupNameIntPair*
 gsupplicant_name_int_find_name_i(
     const char* name,
     const GSupNameIntPair* list,
-    gsize count);
+    gsize count)
+    GSUPPLICANT_INTERNAL;
 
 char*
 gsupplicant_name_int_concat(
     guint value,
     char separator,
     const GSupNameIntPair* list,
-    gsize count);
+    gsize count)
+    GSUPPLICANT_INTERNAL;
 
 const char*
 gsupplicant_format_bytes(
     GBytes* bytes,
-    gboolean append_length);
+    gboolean append_length)
+    GSUPPLICANT_INTERNAL;
 
 guint
 gsupplicant_call_later(
     GDestroyNotify notify,
-    void* data);
+    void* data)
+    GSUPPLICANT_INTERNAL;
 
 guint
 gsupplicant_cancel_later(
-    GCancellable* cancel);
+    GCancellable* cancel)
+    GSUPPLICANT_INTERNAL;
 
 const char*
 gsupplicant_check_abs_path(
-    const char* path);
+    const char* path)
+    GSUPPLICANT_INTERNAL;
 
 const char*
 gsupplicant_check_blob_or_abs_path(
     const char* path,
-    GHashTable* blobs);
+    GHashTable* blobs)
+    GSUPPLICANT_INTERNAL;
 
 int
 gsupplicant_dict_parse(
     GVariant* dict,
     GSupplicantDictStrFunc fn,
-    void* data);
+    void* data)
+    GSUPPLICANT_INTERNAL;
 
 void
 gsupplicant_dict_add_value(
     GVariantBuilder* builder,
     const char* name,
-    GVariant* value);
+    GVariant* value)
+    GSUPPLICANT_INTERNAL;
 
 void
 gsupplicant_dict_add_boolean(
     GVariantBuilder* builder,
     const char* name,
-    gboolean value);
+    gboolean value)
+    GSUPPLICANT_INTERNAL;
 
 void
 gsupplicant_dict_add_uint32(
     GVariantBuilder* builder,
     const char* name,
-    guint32 value);
+    guint32 value)
+    GSUPPLICANT_INTERNAL;
 
 void
 gsupplicant_dict_add_string(
     GVariantBuilder* builder,
     const char* name,
-    const char* value);
+    const char* value)
+    GSUPPLICANT_INTERNAL;
 
 void
 gsupplicant_dict_add_string0(
     GVariantBuilder* builder,
     const char* name,
-    const char* value);
+    const char* value)
+    GSUPPLICANT_INTERNAL;
 
 void
 gsupplicant_dict_add_string_ne(
     GVariantBuilder* builder,
     const char* name,
-    const char* value);
+    const char* value)
+    GSUPPLICANT_INTERNAL;
 
 void
 gsupplicant_dict_add_bytes(
     GVariantBuilder* builder,
     const char* name,
-    GBytes* value);
+    GBytes* value)
+    GSUPPLICANT_INTERNAL;
 
 void
 gsupplicant_dict_add_bytes0(
     GVariantBuilder* builder,
     const char* name,
-    GBytes* value);
+    GBytes* value)
+    GSUPPLICANT_INTERNAL;
 
 GVariant*
 gsupplicant_variant_new_ayy(
-    GBytes** bytes);
+    GBytes** bytes)
+    GSUPPLICANT_INTERNAL;
 
-GBytes *
+GBytes*
 gsupplicant_variant_data_as_bytes(
-   GVariant *value);
+    GVariant* value)
+    GSUPPLICANT_INTERNAL;
 
 #endif /* GSUPPLICANT_UTIL_PRIVATE_H */
 

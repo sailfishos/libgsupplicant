@@ -96,7 +96,6 @@ RELEASE_OBJS = \
 
 DEBUG_LIB_FILE := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_debug_lib)
 RELEASE_LIB_FILE := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_release_lib)
-DEBUG_LIB_PATH := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_debug_path)
 DEBUG_LIB := $(LIB_DIR)/$(DEBUG_LIB_FILE)
 RELEASE_LIB := $(LIB_DIR)/$(RELEASE_LIB_FILE)
 
@@ -136,10 +135,10 @@ test_banner:
 	@echo "===========" $(EXE) "=========== "
 
 test: test_banner debug 
-	@LD_LIBRARY_PATH="$(LIB_DIR)/$(DEBUG_LIB_PATH)" $(DEBUG_EXE)
+	@$(DEBUG_EXE)
 
 valgrind: test_banner debug
-	@LD_LIBRARY_PATH="$(LIB_DIR)/$(DEBUG_LIB_PATH)" G_DEBUG=gc-friendly G_SLICE=always-malloc valgrind --tool=memcheck --leak-check=full --show-possibly-lost=no $(DEBUG_EXE)
+	@G_DEBUG=gc-friendly G_SLICE=always-malloc valgrind --tool=memcheck --leak-check=full --show-possibly-lost=no $(DEBUG_EXE)
 
 $(DEBUG_BUILD_DIR):
 	mkdir -p $@

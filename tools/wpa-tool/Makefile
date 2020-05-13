@@ -72,8 +72,8 @@ RELEASE_CFLAGS = $(CFLAGS) $(RELEASE_FLAGS) -O2
 
 DEBUG_OBJS = $(SRC:%.c=$(DEBUG_BUILD_DIR)/%.o)
 RELEASE_OBJS = $(SRC:%.c=$(RELEASE_BUILD_DIR)/%.o)
-DEBUG_LIB_FILE := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_debug_lib)
-RELEASE_LIB_FILE := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_release_lib)
+DEBUG_LIB_FILE := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_debug_so)
+RELEASE_LIB_FILE := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_release_so)
 DEBUG_LINK_FILE := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_debug_link)
 RELEASE_LINK_FILE := $(shell $(QUIET_MAKE) -C $(LIB_DIR) print_release_link)
 DEBUG_LIB = $(LIB_DIR)/$(DEBUG_LIB_FILE)

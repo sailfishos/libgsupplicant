@@ -3,7 +3,7 @@
 .PHONY: clean all debug release pkgconfig test
 .PHONY: print_debug_lib print_release_lib
 .PHONY: print_debug_link print_release_link
-.PHONY: print_debug_path print_release_path
+.PHONY: print_debug_so print_release_so
 
 #
 # Required packages
@@ -39,6 +39,7 @@ LIB_SYMLINK1 = $(LIB_DEV_SYMLINK).$(VERSION_MAJOR)
 LIB_SYMLINK2 = $(LIB_SYMLINK1).$(VERSION_MINOR)
 LIB_SONAME = $(LIB_SYMLINK1)
 LIB = $(LIB_SONAME).$(VERSION_MINOR).$(VERSION_RELEASE)
+STATIC_LIB = $(LIB_NAME).a
 
 #
 # Sources
@@ -94,8 +95,8 @@ INCLUDES = -I$(INCLUDE_DIR) -I$(GEN_DIR)
 BASE_FLAGS = -fPIC
 FULL_CFLAGS = $(BASE_FLAGS) $(CFLAGS) $(DEFINES) $(WARNINGS) $(INCLUDES) \
   -MMD -MP $(shell pkg-config --cflags $(PKGS))
-FULL_LDFLAGS = $(BASE_FLAGS) $(LDFLAGS) -shared -Wl,-soname -Wl,$(LIB_SONAME) \
-  $(shell pkg-config --libs $(PKGS))
+FULL_LDFLAGS = $(BASE_FLAGS) $(LDFLAGS) -shared -Wl,-soname=$(LIB_SONAME) \
+  -Wl,--version-script=libgsupplicant.map $(shell pkg-config --libs $(PKGS))
 DEBUG_FLAGS = -g
 RELEASE_FLAGS =
 
@@ -150,17 +151,19 @@ DEBUG_LIB = $(DEBUG_BUILD_DIR)/$(LIB)
 RELEASE_LIB = $(RELEASE_BUILD_DIR)/$(LIB)
 DEBUG_LINK = $(DEBUG_BUILD_DIR)/$(LIB_SONAME)
 RELEASE_LINK = $(RELEASE_BUILD_DIR)/$(LIB_SONAME)
+DEBUG_STATIC_LIB = $(DEBUG_BUILD_DIR)/$(STATIC_LIB)
+RELEASE_STATIC_LIB = $(RELEASE_BUILD_DIR)/$(STATIC_LIB)
 
-debug: $(DEBUG_LIB) $(DEBUG_LINK)
+debug: $(DEBUG_STATIC_LIB) $(DEBUG_LIB) $(DEBUG_LINK)
 
-release: $(RELEASE_LIB) $(RELEASE_LINK)
+release: $(RELEASE_STATIC_LIB) $(RELEASE_LIB) $(RELEASE_LINK)
 
 pkgconfig: $(PKGCONFIG)
 
-print_debug_lib:
+print_debug_so:
 	@echo $(DEBUG_LIB)
 
-print_release_lib:
+print_release_so:
 	@echo $(RELEASE_LIB)
 
 print_debug_link:
@@ -169,11 +172,12 @@ print_debug_link:
 print_release_link:
 	@echo $(RELEASE_LINK)
 
-print_debug_path:
-	@echo $(DEBUG_BUILD_DIR)
+print_debug_lib:
+	@echo $(DEBUG_STATIC_LIB)
 
-print_release_path:
-	@echo $(RELEASE_BUILD_DIR)
+print_release_lib:
+	@echo $(RELEASE_STATIC_LIB)
+
 
 clean:
 	rm -f *~ $(SRC_DIR)/*~ $(INCLUDE_DIR)/*~ rpm/*~
@@ -219,6 +223,12 @@ $(RELEASE_LIB): $(RELEASE_BUILD_DIR) $(RELEASE_OBJS)
 ifeq ($(KEEP_SYMBOLS),0)
 	strip $@
 endif
+
+$(DEBUG_STATIC_LIB): $(DEBUG_OBJS)
+	$(AR) rc $@ $?
+
+$(RELEASE_STATIC_LIB): $(RELEASE_OBJS)
+	$(AR) rc $@ $?
 
 $(DEBUG_BUILD_DIR)/$(LIB_SYMLINK1): $(DEBUG_BUILD_DIR)/$(LIB_SYMLINK2)
 	ln -sf $(LIB_SYMLINK2) $@
