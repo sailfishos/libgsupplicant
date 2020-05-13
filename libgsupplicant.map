@@ -1,0 +1,6 @@
+{
+    global:
+        gsupplicant_*;
+    local:
+        *;
+};
