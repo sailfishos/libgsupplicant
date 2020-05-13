@@ -1,3 +1,11 @@
+libgsupplicant (1.0.18) unstable; urgency=low
+
+  * Fixed various glib deprecation warnings
+  * Hide internal symbols
+  * Unified copyright statements
+
+ -- Slava Monich <slava.monich@jolla.com>  Wed, 13 May 2020 14:13:09 +0300
+
 libgsupplicant (1.0.17) unstable; urgency=low
 
   * Add EAP event signalling
