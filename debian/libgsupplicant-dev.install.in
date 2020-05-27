@@ -1,0 +1,3 @@
+debian/tmp/@LIBDIR@/libgsupplicant.so @LIBDIR@
+debian/tmp/@LIBDIR@/pkgconfig/libgsupplicant.pc @LIBDIR@/pkgconfig
+debian/tmp/usr/include/* usr/include
