@@ -4,6 +4,7 @@ debian/libgsupplicant
 debian/libgsupplicant-dev
 debian/*.debhelper.log
 debian/*.debhelper
+debian/*.install
 debian/*.substvars
 debian/tmp
 documentation.list

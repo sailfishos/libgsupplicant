@@ -4,7 +4,7 @@ Release: 0
 Summary: Client library for wpa_supplicant
 Group: Development/Libraries
 License: BSD
-URL: https://git.merproject.org/mer-core/libgsupplicant
+URL: https://git.sailfishos.org/mer-core/libgsupplicant
 Source: %{name}-%{version}.tar.bz2
 
 %define libglibutil_version 1.0.21
@@ -31,11 +31,11 @@ This package contains the development library for %{name}.
 %setup -q
 
 %build
-make KEEP_SYMBOLS=1 release pkgconfig
+make LIBDIR=%{_libdir} KEEP_SYMBOLS=1 release pkgconfig
 
 %install
 rm -rf %{buildroot}
-make install-dev DESTDIR=%{buildroot}
+make LIBDIR=%{_libdir} DESTDIR=%{buildroot} install-dev
 
 %check
 make -C test test
