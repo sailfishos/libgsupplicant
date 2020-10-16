@@ -1,3 +1,9 @@
+libgsupplicant (1.0.21) unstable; urgency=low
+
+  * Make library executable on RPM based systems
+
+ -- Slava Monich <slava.monich@jolla.com>  Fri, 16 Oct 2020 04:06:31 +0300
+
 libgsupplicant (1.0.19) unstable; urgency=low
 
   * Respect arch specific lib dir
