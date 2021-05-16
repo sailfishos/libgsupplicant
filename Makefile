@@ -23,7 +23,7 @@ all: debug release pkgconfig
 
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
-VERSION_RELEASE = 21
+VERSION_RELEASE = 22
 
 # Version for pkg-config
 PCVERSION = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_RELEASE)
@@ -140,6 +140,7 @@ $(GEN_FILES): | $(GEN_DIR)
 $(PKGCONFIG): | $(BUILD_DIR)
 $(DEBUG_OBJS): | $(DEBUG_BUILD_DIR)
 $(RELEASE_OBJS): | $(RELEASE_BUILD_DIR)
+$(SRC:%.c=$(SRC_DIR)/%.c): | $(GEN_FILES)
 
 #
 # Rules
