@@ -7,7 +7,7 @@ License: BSD
 URL: https://git.sailfishos.org/mer-core/libgsupplicant
 Source: %{name}-%{version}.tar.bz2
 
-%define libglibutil_version 1.0.21
+%define libglibutil_version 1.0.52
 
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(gio-2.0)
@@ -31,7 +31,7 @@ This package contains the development library for %{name}.
 %setup -q
 
 %build
-make LIBDIR=%{_libdir} KEEP_SYMBOLS=1 release pkgconfig
+make  %{_smp_mflags} LIBDIR=%{_libdir} KEEP_SYMBOLS=1 release pkgconfig
 
 %install
 rm -rf %{buildroot}
