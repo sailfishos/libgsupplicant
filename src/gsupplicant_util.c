@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015-2020 Jolla Ltd.
- * Copyright (C) 2015-2020 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2015-2021 Jolla Ltd.
+ * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -232,23 +232,6 @@ gsupplicant_format_bytes(
     } else {
         return "(null)";
     }
-}
-
-static
-gboolean
-gsupplicant_dummy_source_func(
-    gpointer cancel)
-{
-    return G_SOURCE_REMOVE;
-}
-
-guint
-gsupplicant_call_later(
-    GDestroyNotify notify,
-    void* data)
-{
-    return g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
-        gsupplicant_dummy_source_func, data, notify);
 }
 
 static

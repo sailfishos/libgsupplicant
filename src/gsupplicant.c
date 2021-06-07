@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015-2020 Jolla Ltd.
- * Copyright (C) 2015-2020 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2015-2021 Jolla Ltd.
+ * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -218,7 +218,7 @@ gsupplicant_call_finished(
     gpointer data)
 {
     GSupplicantCall* call = data;
-    g_cancellable_disconnect(call->cancel, call->cancel_id);
+    g_signal_handler_disconnect(call->cancel, call->cancel_id);
     if (!g_cancellable_is_cancelled(call->cancel)) {
         GASSERT(call->supplicant);
         call->finish(call->supplicant, call->cancel, result,
