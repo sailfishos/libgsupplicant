@@ -1,3 +1,9 @@
+libgsupplicant (1.0.24) unstable; urgency=low
+
+  * Housekeeping release
+
+ -- Slava Monich <slava.monich@jolla.com>  Fri, 12 Nov 2021 20:05:11 +0200
+
 libgsupplicant (1.0.22) unstable; urgency=low
 
   * Use gutil_memdup() instead of g_memdup()
