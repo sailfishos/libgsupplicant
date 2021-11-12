@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015-2020 Jolla Ltd.
- * Copyright (C) 2015-2020 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2015-2021 Jolla Ltd.
+ * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -43,6 +43,7 @@
 
 #include <gutil_strv.h>
 #include <gutil_misc.h>
+#include <gutil_macros.h>
 
 /* Generated headers */
 #include "fi.w1.wpa_supplicant1.Interface.h"
@@ -284,22 +285,6 @@ static const GSupNameIntPair gsupplicant_interface_states [] = {
     { "group_handshake",    GSUPPLICANT_INTERFACE_STATE_GROUP_HANDSHAKE },
     { "completed",          GSUPPLICANT_INTERFACE_STATE_COMPLETED },
     { "unknown",            GSUPPLICANT_INTERFACE_STATE_UNKNOWN }
-};
-
-/* EAP events */
-static struct {
-    const char* status;
-    const char* param;
-    GSUPPLICANT_INTERFACE_EAP_EVENT event;
-} gsupplicant_interface_eap_events [] = {
-    { "reject proposed method", NULL, GSUPPLICANT_INTERFACE_EAP_REJECT_METHOD },
-    { "accept proposed method", NULL, GSUPPLICANT_INTERFACE_EAP_ACCEPT_METHOD },
-    { "remote certificate verification", "success", GSUPPLICANT_INTERFACE_EAP_REMOTE_CERT_ACCEPTED },
-    { "remote certificate verification", NULL, GSUPPLICANT_INTERFACE_EAP_REMOTE_CERT_REJECTED },
-    { "eap parameter needed", "PASSPHRASE", GSUPPLICANT_INTERFACE_EAP_PASSPHRASE_NEEDED },
-    { "eap parameter needed", NULL, GSUPPLICANT_INTERFACE_EAP_PARAM_NEEDED },
-    { "completion", "success", GSUPPLICANT_INTERFACE_EAP_COMPLETED },
-    { "completion", NULL, GSUPPLICANT_INTERFACE_EAP_FAILED }
 };
 
 /*==========================================================================*
@@ -806,7 +791,7 @@ gsupplicant_interface_wps_connect_free(
     if (connect->destroy) {
         connect->destroy(connect->data);
     }
-    g_slice_free(GSupplicantInterfaceWPSConnect, connect);
+    gutil_slice_free(connect);
 }
 
 static
@@ -1164,7 +1149,7 @@ gsupplicant_interface_call_finished(
     if (call->destroy) {
         call->destroy(call->data);
     }
-    g_slice_free(GSupplicantInterfaceCall, call);
+    gutil_slice_free(call);
 }
 
 static
@@ -1224,7 +1209,7 @@ gsupplicant_interface_add_network_call_free(
     if (call->destroy) {
         call->destroy(call->data);
     }
-    g_slice_free(GSupplicantInterfaceAddNetworkCall, call);
+    gutil_slice_free(call);
 }
 
 static
@@ -1356,9 +1341,7 @@ gsupplicant_interface_call_finish_void(
     if (call->fn.fn_void) {
         call->fn.fn_void(call->iface, call->cancel, error, call->data);
     }
-    if (error) {
-        g_error_free(error);
-    }
+    g_clear_error(&error);
 }
 
 static
@@ -1427,9 +1410,7 @@ gsupplicant_interface_call_finish_signal_poll(
         call->fn.fn_signal_poll(call->iface, call->cancel, error, info_ptr,
             call->data);
     }
-    if (error) {
-        g_error_free(error);
-    }
+    g_clear_error(&error);
 }
 
 static
@@ -1996,23 +1977,52 @@ void
 gsupplicant_interface_proxy_eap(
     FiW1Wpa_supplicant1Interface* proxy,
     const char* status,
-    const char* parameter,
+    const char* param,
     gpointer data)
 {
-    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
-    size_t i;
-
-    if (!status) {
-        return;
-    }
-
-    for (i = 0; i < G_N_ELEMENTS(gsupplicant_interface_eap_events); i++) {
-        if (!g_strcmp0(status, gsupplicant_interface_eap_events[i].status) &&
-                (!gsupplicant_interface_eap_events[i].param ||
-                 !g_strcmp0(parameter, gsupplicant_interface_eap_events[i].param))) {
-            g_signal_emit(self, gsupplicant_interface_signals[SIGNAL_EAP], 0,
-                    gsupplicant_interface_eap_events[i].event);
-            break;
+    if (status) {
+        GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+        size_t i;
+        /* EAP events */
+        static const struct gsupplicant_eap_event {
+            const char* status;
+            const char* param;
+            GSUPPLICANT_INTERFACE_EAP_EVENT event;
+        } eap_events [] = {
+            {
+                "reject proposed method", NULL,
+                GSUPPLICANT_INTERFACE_EAP_REJECT_METHOD
+            },{
+                "accept proposed method", NULL,
+                GSUPPLICANT_INTERFACE_EAP_ACCEPT_METHOD
+            },{
+                "remote certificate verification", "success",
+                GSUPPLICANT_INTERFACE_EAP_REMOTE_CERT_ACCEPTED
+            },{
+                "remote certificate verification", NULL,
+                GSUPPLICANT_INTERFACE_EAP_REMOTE_CERT_REJECTED
+            },{
+                "eap parameter needed", "PASSPHRASE",
+                GSUPPLICANT_INTERFACE_EAP_PASSPHRASE_NEEDED
+            },{
+                "eap parameter needed", NULL,
+                GSUPPLICANT_INTERFACE_EAP_PARAM_NEEDED
+            },{
+                "completion", "success",
+                GSUPPLICANT_INTERFACE_EAP_COMPLETED
+            },{
+                "completion", NULL,
+                GSUPPLICANT_INTERFACE_EAP_FAILED
+            }
+        };
+        for (i = 0; i < G_N_ELEMENTS(eap_events); i++) {
+            if (!g_strcmp0(status, eap_events[i].status) &&
+                (!eap_events[i].param ||
+                 !g_strcmp0(param, eap_events[i].param))) {
+                g_signal_emit(self, gsupplicant_interface_signals
+                    [SIGNAL_EAP], 0, eap_events[i].event);
+                break;
+            }
         }
     }
 }
@@ -2854,9 +2864,7 @@ gsupplicant_interface_add_network4(
         if (done) {
             gsupplicant_interface_call_add_network_finish(call, error);
         }
-        if (error) {
-            g_error_free(error);
-        }
+        g_clear_error(&error);
     } else {
         gsupplicant_interface_call_add_network_finish_error(call);
     }
@@ -2907,9 +2915,7 @@ gsupplicant_interface_add_network2(
     if (done) {
         gsupplicant_interface_call_add_network_finish(call, error);
     }
-    if (error) {
-        g_error_free(error);
-    }
+    g_clear_error(&error);
 }
 
 static
@@ -2950,9 +2956,7 @@ gsupplicant_interface_add_network1(
     if (done) {
         gsupplicant_interface_call_add_network_finish(call, error);
     }
-    if (error) {
-        g_error_free(error);
-    }
+    g_clear_error(&error);
 }
 
 static
@@ -2970,32 +2974,25 @@ gsupplicant_interface_add_network_pre1(
     if (fi_w1_wpa_supplicant1_interface_call_add_blob_finish(proxy,
         result, &error)) {
         gpointer name, blob;
-
         if (g_hash_table_iter_next(&call->iter, &name, &blob)) {
             gsize size = 0;
             const guint8* data = g_bytes_get_data(blob, &size);
-
-            fi_w1_wpa_supplicant1_interface_call_add_blob(
-                    proxy,
-                    name,
-                    g_variant_new_fixed_array(
-                        G_VARIANT_TYPE_BYTE, data, size, 1),
-                    call->cancel,
-                    gsupplicant_interface_add_network_pre1, call);
+            fi_w1_wpa_supplicant1_interface_call_add_blob(proxy, name,
+                g_variant_new_fixed_array(G_VARIANT_TYPE_BYTE, data, size, 1),
+                call->cancel, gsupplicant_interface_add_network_pre1, call);
         } else {
             g_hash_table_unref(call->blobs);
             call->blobs = NULL;
             fi_w1_wpa_supplicant1_interface_call_add_network(proxy,
-                    call->args, call->cancel, gsupplicant_interface_add_network1,
-                    call);
+                call->args, call->cancel, gsupplicant_interface_add_network1,
+                call);
             g_variant_unref(call->args);
             call->args = NULL;
         }
     }
-    if (error) {
-        g_error_free(error);
-    }
+    g_clear_error(&error);
 }
+
 static
 void
 gsupplicant_interface_add_network0(
@@ -3015,17 +3012,11 @@ gsupplicant_interface_add_network0(
             gpointer name, blob;
             gsize size = 0;
             const guint8* data;
-
             g_hash_table_iter_next(&call->iter, &name, &blob);
             data = g_bytes_get_data(blob, &size);
-
-            fi_w1_wpa_supplicant1_interface_call_add_blob(
-                proxy,
-                name,
-                g_variant_new_fixed_array(
-                    G_VARIANT_TYPE_BYTE, data, size, 1),
-                call->cancel,
-                gsupplicant_interface_add_network_pre1, call);
+            fi_w1_wpa_supplicant1_interface_call_add_blob(proxy, name,
+                g_variant_new_fixed_array(G_VARIANT_TYPE_BYTE, data, size, 1),
+                call->cancel, gsupplicant_interface_add_network_pre1, call);
         } else {
             fi_w1_wpa_supplicant1_interface_call_add_network(proxy, call->args,
                 call->cancel, gsupplicant_interface_add_network1, call);
@@ -3036,9 +3027,7 @@ gsupplicant_interface_add_network0(
         call->pending = FALSE;
         gsupplicant_interface_call_add_network_finish(call, error);
     }
-    if (error) {
-        g_error_free(error);
-    }
+    g_clear_error(&error);
 }
 
 static
@@ -3053,20 +3042,17 @@ gsupplicant_interface_add_network_pre0(
     FiW1Wpa_supplicant1Interface* proxy = call->iface->priv->proxy;
     GASSERT(proxy == FI_W1_WPA_SUPPLICANT1_INTERFACE(obj));
     if (fi_w1_wpa_supplicant1_interface_call_remove_blob_finish(proxy,
-            result, &error) ||
-        gsupplicant_is_error(error, GSUPPLICANT_ERROR_BLOB_UNKNOWN)) {
-            const gchar *name;
-            if (g_hash_table_iter_next(&call->iter, (gpointer*)&name, NULL)) {
-                fi_w1_wpa_supplicant1_interface_call_remove_blob(
-                    proxy, name,
-                    call->cancel, gsupplicant_interface_add_network_pre0,
-                    call);
-            } else {
-                g_hash_table_iter_init(&call->iter, call->blobs);
-                fi_w1_wpa_supplicant1_interface_call_remove_all_networks(
-                    proxy, call->cancel, gsupplicant_interface_add_network0,
-                    call);
-            }
+        result, &error) || gsupplicant_is_error(error,
+        GSUPPLICANT_ERROR_BLOB_UNKNOWN)) {
+        const gchar *name;
+        if (g_hash_table_iter_next(&call->iter, (gpointer*)&name, NULL)) {
+            fi_w1_wpa_supplicant1_interface_call_remove_blob(proxy, name,
+                call->cancel, gsupplicant_interface_add_network_pre0, call);
+        } else {
+            g_hash_table_iter_init(&call->iter, call->blobs);
+            fi_w1_wpa_supplicant1_interface_call_remove_all_networks(
+                proxy, call->cancel, gsupplicant_interface_add_network0, call);
+        }
     } else {
         call->pending = FALSE;
         gsupplicant_interface_call_add_network_finish(call, error);
@@ -3091,39 +3077,33 @@ gsupplicant_interface_add_network_full2(
             gsupplicant_interface_add_network_call_new(self, cancel, np,
                 flags, blobs, fn, destroy, data);
         call->pending = TRUE;
-
         if (flags & GSUPPLICANT_ADD_NETWORK_DELETE_OTHER) {
             const gchar *name;
-            if (blobs && g_hash_table_iter_next(&call->iter, (gpointer*)&name, NULL)) {
-                fi_w1_wpa_supplicant1_interface_call_remove_blob(
-                    priv->proxy, name,
-                    call->cancel, gsupplicant_interface_add_network_pre0,
+            if (blobs && g_hash_table_iter_next(&call->iter,
+               (gpointer*)&name, NULL)) {
+                fi_w1_wpa_supplicant1_interface_call_remove_blob(priv->proxy,
+                    name, call->cancel, gsupplicant_interface_add_network_pre0,
                     call);
             } else {
                 fi_w1_wpa_supplicant1_interface_call_remove_all_networks(
-                    priv->proxy, call->cancel, gsupplicant_interface_add_network0,
-                    call);
+                    priv->proxy, call->cancel,
+                    gsupplicant_interface_add_network0, call);
             }
         } else {
             if (call->blobs) {
                 gpointer name, blob;
                 gsize size = 0;
                 const guint8* data;
-
                 g_hash_table_iter_next(&call->iter, &name, &blob);
                 data = g_bytes_get_data(blob, &size);
-
-                fi_w1_wpa_supplicant1_interface_call_add_blob(
-                    priv->proxy,
-                    name,
-                    g_variant_new_fixed_array(
-                        G_VARIANT_TYPE_BYTE, data, size, 1),
-                    call->cancel,
+                fi_w1_wpa_supplicant1_interface_call_add_blob(priv->proxy,
+                    name, g_variant_new_fixed_array(G_VARIANT_TYPE_BYTE,
+                    data, size, 1), call->cancel,
                     gsupplicant_interface_add_network_pre1, call);
             } else {
                 fi_w1_wpa_supplicant1_interface_call_add_network(priv->proxy,
-                    call->args, call->cancel, gsupplicant_interface_add_network1,
-                    call);
+                    call->args, call->cancel,
+                    gsupplicant_interface_add_network1, call);
                 g_variant_unref(call->args);
                 call->args = NULL;
             }
@@ -3210,11 +3190,8 @@ gsupplicant_interface_add_eap_status_handler(
     GSupplicantInterfaceEapStatusFunc fn,
     void* data) /* Since: 1.0.17 */
 {
-    if (G_LIKELY(self)) {
-        return g_signal_connect(self, SIGNAL_EAP_NAME, G_CALLBACK(fn), data);
-    }
-
-    return 0;
+    return G_LIKELY(self) ? g_signal_connect(self, SIGNAL_EAP_NAME,
+        G_CALLBACK(fn), data) :  0;
 }
 
 /*==========================================================================*
