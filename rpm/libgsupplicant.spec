@@ -2,9 +2,8 @@ Name: libgsupplicant
 Version: 1.0.22
 Release: 0
 Summary: Client library for wpa_supplicant
-Group: Development/Libraries
 License: BSD
-URL: https://git.sailfishos.org/mer-core/libgsupplicant
+URL: https://github.com/sailfishos/libgsupplicant
 Source: %{name}-%{version}.tar.bz2
 
 %define libglibutil_version 1.0.52
@@ -46,6 +45,7 @@ make -C test test
 
 %files
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/%{name}.so.*
 
 %files devel
