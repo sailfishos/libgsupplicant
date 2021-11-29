@@ -1,3 +1,10 @@
+libgsupplicant (1.0.25) unstable; urgency=low
+
+  * Cancel D-Bus calls in a deadlock-free way
+  * Enable link-time optimizer for release build
+
+ -- Slava Monich <slava.monich@jolla.com>  Mon, 29 Nov 2021 21:35:41 +0200
+
 libgsupplicant (1.0.24) unstable; urgency=low
 
   * Housekeeping release
