@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2017-2020 Jolla Ltd.
- * Copyright (C) 2017-2020 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2017-2021 Jolla Ltd.
+ * Copyright (C) 2017-2021 Slava Monich <slava.monich@jolla.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -209,7 +209,7 @@ test_util_parse_bits_array(
     g_variant_builder_add_value(&builder, g_variant_new_int32(0));
     var = g_variant_ref_sink(g_variant_builder_end(&builder));
 
-    g_assert(!gsupplicant_parse_bits_array(0, "test", var, 
+    g_assert(!gsupplicant_parse_bits_array(0, "test", var,
         test_map, G_N_ELEMENTS(test_map)));
     g_variant_unref(var);
 
@@ -218,7 +218,7 @@ test_util_parse_bits_array(
     g_variant_builder_add_value(&builder, g_variant_new_string("unknown"));
     var = g_variant_ref_sink(g_variant_builder_end(&builder));
 
-    g_assert(gsupplicant_parse_bits_array(0, "test", var, 
+    g_assert(gsupplicant_parse_bits_array(0, "test", var,
         test_map, G_N_ELEMENTS(test_map)) == BIT_FOO);
     g_variant_unref(var);
 }
@@ -255,38 +255,6 @@ test_util_format_bytes(
     g_idle_add(test_loop_quit, loop);
     g_main_loop_run(loop);
     g_main_loop_unref(loop);
-}
-
-/*==========================================================================*
- * call_later
- *==========================================================================*/
-
-void
-test_util_call_later_cb(
-    void* data)
-{
-    (*((int*)data))++;
-}
-
-static
-void
-test_util_call_later(
-    void)
-{
-    GMainLoop* loop;
-    int count = 0;
-
-    /* The callback is invoked even if the source gets removed */
-    g_source_remove(gsupplicant_call_later(test_util_call_later_cb, &count));
-    g_assert(count == 1);
-
-    /* Or during the next idle loop if it doesn't get removed */
-    gsupplicant_call_later(test_util_call_later_cb, &count);
-    loop = g_main_loop_new(NULL, TRUE);
-    g_idle_add(test_loop_quit, loop);
-    g_main_loop_run(loop);
-    g_main_loop_unref(loop);
-    g_assert(count == 2);
 }
 
 /*==========================================================================*
@@ -595,7 +563,6 @@ int main(int argc, char* argv[])
     g_test_add_func(TEST_PREFIX "name_int", test_util_name_int);
     g_test_add_func(TEST_PREFIX "parse_bits_array", test_util_parse_bits_array);
     g_test_add_func(TEST_PREFIX "format_bytes", test_util_format_bytes);
-    g_test_add_func(TEST_PREFIX "call_later", test_util_call_later);
     g_test_add_func(TEST_PREFIX "cancel_later", test_util_cancel_later);
     g_test_add_func(TEST_PREFIX "abs_path", test_util_abs_path);
     g_test_add_func(TEST_PREFIX "blob_or_abs_path", test_util_blob_or_abs_path);

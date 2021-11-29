@@ -783,7 +783,7 @@ gsupplicant_interface_wps_connect_free(
     if (connect->wps.p2p_address) g_bytes_unref(connect->wps.p2p_address);
     gsupplicant_interface_unref(connect->iface);
     if (connect->cancel_id) {
-        g_cancellable_disconnect(connect->cancel, connect->cancel_id);
+        g_signal_handler_disconnect(connect->cancel, connect->cancel_id);
     }
     g_object_unref(connect->cancel);
     g_free(connect->pin);
@@ -796,27 +796,11 @@ gsupplicant_interface_wps_connect_free(
 
 static
 void
-gsupplicant_interface_wps_connect_free1(
-    void* connect)
-{
-    gsupplicant_interface_wps_connect_free(connect);
-}
-
-static
-void
 gsupplicant_interface_wps_connect_cancelled(
     GCancellable* cancel,
-    gpointer data)
+    gpointer connect)
 {
-    /*
-     * Under GLib < 2.40 this function is invoked under the lock
-     * protecting cancellable. We can't call g_cancellable_disconnect
-     * because it wouild deadlock, it has to be invoked on a fresh stack.
-     * That sucks.
-     */
-    GSupplicantInterfaceWPSConnect* connect = data;
-    gsupplicant_interface_wps_connect_dispose(connect);
-    gsupplicant_call_later(gsupplicant_interface_wps_connect_free1, connect);
+    gsupplicant_interface_wps_connect_free(connect);
 }
 
 static
@@ -829,7 +813,7 @@ gsupplicant_interface_wps_connect_ok(
     if (connect->fn) {
         if (connect->cancel_id) {
             /* In case if callback calls g_cancellable_cancel() */
-            g_cancellable_disconnect(connect->cancel, connect->cancel_id);
+            g_signal_handler_disconnect(connect->cancel, connect->cancel_id);
             connect->cancel_id = 0;
         }
         connect->fn(connect->iface, connect->cancel, NULL, connect->new_pin,
@@ -849,7 +833,7 @@ gsupplicant_interface_wps_connect_error_free(
         GError* tmp_error = NULL;
         if (connect->cancel_id) {
             /* In case if callback calls g_cancellable_cancel() */
-            g_cancellable_disconnect(connect->cancel, connect->cancel_id);
+            g_signal_handler_disconnect(connect->cancel, connect->cancel_id);
             connect->cancel_id = 0;
         }
         if (!error) {
@@ -877,7 +861,7 @@ gsupplicant_interface_wps_connect_timeout(
             "WPS connect timed out");
         if (connect->cancel_id) {
             /* In case if callback calls g_cancellable_cancel() */
-            g_cancellable_disconnect(connect->cancel, connect->cancel_id);
+            g_signal_handler_disconnect(connect->cancel, connect->cancel_id);
             connect->cancel_id = 0;
         }
         connect->fn(connect->iface, connect->cancel, error, NULL,
@@ -1199,7 +1183,7 @@ gsupplicant_interface_add_network_call_free(
     gsupplicant_interface_add_network_call_dispose(call);
     gsupplicant_interface_unref(call->iface);
     if (call->cancel_id) {
-        g_cancellable_disconnect(call->cancel, call->cancel_id);
+        g_signal_handler_disconnect(call->cancel, call->cancel_id);
     }
     if (call->blobs) {
         g_hash_table_unref(call->blobs);
@@ -1214,34 +1198,22 @@ gsupplicant_interface_add_network_call_free(
 
 static
 void
-gsupplicant_interface_add_network_call_free1(
-    void* call)
-{
-    gsupplicant_interface_add_network_call_free(call);
-}
-
-static
-void
 gsupplicant_interface_call_add_network_finish(
     GSupplicantInterfaceAddNetworkCall* call,
     const GError* error)
 {
-    /*
-     * If it's cancelled then gsupplicant_interface_add_network_call_free1
-     * call has been scheduled and we don't have to do anything here.
-     */
     if (!g_cancellable_is_cancelled(call->cancel)) {
         if (call->fn) {
             if (call->cancel_id) {
                 /* In case if the callback calls g_cancellable_cancel() */
-                g_cancellable_disconnect(call->cancel, call->cancel_id);
+                g_signal_handler_disconnect(call->cancel, call->cancel_id);
                 call->cancel_id = 0;
             }
             call->fn(call->iface, call->cancel, error,
                 error ? NULL : call->path, call->data);
         }
-        gsupplicant_interface_add_network_call_free(call);
     }
+    gsupplicant_interface_add_network_call_free(call);
 }
 
 static
@@ -1249,24 +1221,20 @@ void
 gsupplicant_interface_call_add_network_finish_error(
     GSupplicantInterfaceAddNetworkCall* call)
 {
-    /*
-     * If it's cancelled then gsupplicant_interface_add_network_call_free1
-     * call has been scheduled and we don't have to do anything here.
-     */
     if (!g_cancellable_is_cancelled(call->cancel)) {
         if (call->fn) {
             GError* error = g_error_new(G_IO_ERROR, G_IO_ERROR_FAILED,
                 "Failed to enable %s", call->path);
             if (call->cancel_id) {
                 /* In case if the callback calls g_cancellable_cancel() */
-                g_cancellable_disconnect(call->cancel, call->cancel_id);
+                g_signal_handler_disconnect(call->cancel, call->cancel_id);
                 call->cancel_id = 0;
             }
             call->fn(call->iface, call->cancel, error, NULL, call->data);
             g_error_free(error);
         }
-        gsupplicant_interface_add_network_call_free(call);
     }
+    gsupplicant_interface_add_network_call_free(call);
 }
 
 static
@@ -1284,14 +1252,7 @@ gsupplicant_interface_add_network_call_cancelled(
          */
         gsupplicant_interface_add_network_call_dispose(call);
     } else {
-        /*
-         * Under GLib < 2.40 this function is invoked under the lock
-         * protecting cancellable. We can't call g_cancellable_disconnect
-         * because it wouild deadlock, it has to be invoked on a fresh stack.
-         * That sucks.
-         */
-        gsupplicant_call_later(gsupplicant_interface_add_network_call_free1,
-            call);
+        gsupplicant_interface_add_network_call_free(call);
     }
 }
 
