@@ -1,6 +1,6 @@
 Name: libgsupplicant
 
-Version: 1.0.25
+Version: 1.0.26
 Release: 0
 Summary: Client library for wpa_supplicant
 License: BSD
