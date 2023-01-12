@@ -183,7 +183,9 @@ gsupplicant_parse_bits_array(
                     g_string_append(buf, str);
                 }
 #endif
-            } else {
+            } else if (g_strcmp0(name, "KeyMgmt") || g_strcmp0(str, "sae")) {
+                /* FIXME: just silencing the SAE case for now as it's known but not supported.
+                   Should implement proper mapping and support */
                 GWARN("Unexpected %s value %s", name, str);
             }
         }
