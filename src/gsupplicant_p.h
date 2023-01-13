@@ -34,10 +34,22 @@
 
 #include "gsupplicant_types_p.h"
 
+GSUPPLICANT_CIPHER
+gsupplicant_parse_cipher_value(
+    const char* name,
+    GVariant* value) /* G_VARIANT_TYPE_STRING */
+    GSUPPLICANT_INTERNAL;
+
+GSUPPLICANT_CIPHER
+gsupplicant_parse_cipher_list(
+    const char* name,
+    GVariant* value) /* G_VARIANT_TYPE_STRING_ARRAY */
+    GSUPPLICANT_INTERNAL;
+
 GSUPPLICANT_KEYMGMT
 gsupplicant_parse_keymgmt_list(
     const char* name,
-    GVariant* value)
+    GVariant* value) /* G_VARIANT_TYPE_STRING_ARRAY */
     GSUPPLICANT_INTERNAL;
 
 #endif /* GSUPPLICANT_PRIVATE_H */

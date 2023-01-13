@@ -52,7 +52,10 @@ typedef enum gsupplicant_cipher {
     GSUPPLICANT_CIPHER_TKIP             = (0x00000004),
     GSUPPLICANT_CIPHER_WEP104           = (0x00000008),
     GSUPPLICANT_CIPHER_WEP40            = (0x00000010),
-    GSUPPLICANT_CIPHER_AES128_CMAC      = (0x00000020)
+    GSUPPLICANT_CIPHER_AES128_CMAC      = (0x00000020),
+    GSUPPLICANT_CIPHER_CCMP_256         = (0x00000040), /* Since 1.0.27 */
+    GSUPPLICANT_CIPHER_GCMP             = (0x00000080), /* Since 1.0.27 */
+    GSUPPLICANT_CIPHER_GCMP_256         = (0x00000100)  /* Since 1.0.27 */
 } GSUPPLICANT_CIPHER;
 
 typedef enum gsupplicant_keymgmt {

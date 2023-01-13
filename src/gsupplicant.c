@@ -177,7 +177,10 @@ static const GSupNameIntPair gsupplicant_cipher_suites [] = {
     { "tkip",           GSUPPLICANT_CIPHER_TKIP },
     { "wep104",         GSUPPLICANT_CIPHER_WEP104 },
     { "wep40",          GSUPPLICANT_CIPHER_WEP40 },
-    { "aes128cmac",     GSUPPLICANT_CIPHER_AES128_CMAC }
+    { "aes128cmac",     GSUPPLICANT_CIPHER_AES128_CMAC },
+    { "ccmp-256",       GSUPPLICANT_CIPHER_CCMP_256 },
+    { "gcmp",           GSUPPLICANT_CIPHER_GCMP },
+    { "gcmp-256",       GSUPPLICANT_CIPHER_GCMP_256 }
 };
 
 static const GSupNameIntPair gsupplicant_keymgmt_suites [] = {
@@ -897,6 +900,24 @@ gsupplicant_keymgmt_suite_name(
 /*==========================================================================*
  * Internal API
  *==========================================================================*/
+
+GSUPPLICANT_CIPHER
+gsupplicant_parse_cipher_value(
+    const char* name,
+    GVariant* value)
+{
+    return gsupplicant_parse_bit_value(name, value,
+        gsupplicant_cipher_suites, G_N_ELEMENTS(gsupplicant_cipher_suites));
+}
+
+GSUPPLICANT_CIPHER
+gsupplicant_parse_cipher_list(
+    const char* name,
+    GVariant* value)
+{
+    return gsupplicant_parse_bits_array(0, name, value,
+        gsupplicant_cipher_suites, G_N_ELEMENTS(gsupplicant_cipher_suites));
+}
 
 GSUPPLICANT_KEYMGMT
 gsupplicant_parse_keymgmt_list(

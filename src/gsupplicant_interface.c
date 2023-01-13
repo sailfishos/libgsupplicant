@@ -1461,22 +1461,9 @@ gsupplicant_interface_parse_cap(
 {
     GSupplicantInterfaceCaps* caps = data;
     if (!g_strcmp0(name, "Pairwise")) {
-        static const GSupNameIntPair pairwise_map [] = {
-            { "ccmp",           GSUPPLICANT_CIPHER_CCMP },
-            { "tkip",           GSUPPLICANT_CIPHER_TKIP },
-            { "none",           GSUPPLICANT_CIPHER_NONE }
-        };
-        caps->pairwise = gsupplicant_parse_bits_array(0, name, value,
-            pairwise_map, G_N_ELEMENTS(pairwise_map));
+        caps->pairwise = gsupplicant_parse_cipher_list(name, value);
     } else if (!g_strcmp0(name, "Group")) {
-        static const GSupNameIntPair group_map [] = {
-            { "ccmp",           GSUPPLICANT_CIPHER_CCMP },
-            { "tkip",           GSUPPLICANT_CIPHER_TKIP },
-            { "wep104",         GSUPPLICANT_CIPHER_WEP104 },
-            { "wep40",          GSUPPLICANT_CIPHER_WEP40 }
-        };
-        caps->group = gsupplicant_parse_bits_array(0, name, value,
-            group_map, G_N_ELEMENTS(group_map));
+        caps->group = gsupplicant_parse_cipher_list(name, value);
     } else if (!g_strcmp0(name, "KeyMgmt")) {
         caps->keymgmt = gsupplicant_parse_keymgmt_list(name, value);
     } else if (!g_strcmp0(name, "Protocol")) {
