@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 Jolla Ltd.
- * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -190,7 +190,11 @@ static const GSupNameIntPair gsupplicant_keymgmt_suites [] = {
     { "wpa-eap-sha256", GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256 },
     { "ieee8021x",      GSUPPLICANT_KEYMGMT_IEEE8021X },
     { "wpa-none",       GSUPPLICANT_KEYMGMT_WPA_NONE },
-    { "wps",            GSUPPLICANT_KEYMGMT_WPS }
+    { "wps",            GSUPPLICANT_KEYMGMT_WPS },
+    { "sae",            GSUPPLICANT_KEYMGMT_SAE },
+    { "sae-ext-key",    GSUPPLICANT_KEYMGMT_SAE_EXT_KEY },
+    { "ft-sae",         GSUPPLICANT_KEYMGMT_FT_SAE },
+    { "ft-sae-ext-key", GSUPPLICANT_KEYMGMT_FT_SAE_EXT_KEY }
 };
 
 /*==========================================================================*
@@ -887,6 +891,19 @@ gsupplicant_keymgmt_suite_name(
     guint* keymgmt_suite)
 {
     return gsupplicant_name_int_find_bit(keymgmt_suites, keymgmt_suite,
+        gsupplicant_keymgmt_suites, G_N_ELEMENTS(gsupplicant_keymgmt_suites));
+}
+
+/*==========================================================================*
+ * Internal API
+ *==========================================================================*/
+
+GSUPPLICANT_KEYMGMT
+gsupplicant_parse_keymgmt_list(
+    const char* name,
+    GVariant* value)
+{
+    return gsupplicant_parse_bits_array(0, name, value,
         gsupplicant_keymgmt_suites, G_N_ELEMENTS(gsupplicant_keymgmt_suites));
 }
 

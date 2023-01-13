@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 Jolla Ltd.
- * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -36,6 +36,7 @@
 #include "gsupplicant_network.h"
 #include "gsupplicant_bss.h"
 #include "gsupplicant.h"
+#include "gsupplicant_p.h"
 #include "gsupplicant_util_p.h"
 #include "gsupplicant_dbus.h"
 #include "gsupplicant_log.h"
@@ -1477,20 +1478,7 @@ gsupplicant_interface_parse_cap(
         caps->group = gsupplicant_parse_bits_array(0, name, value,
             group_map, G_N_ELEMENTS(group_map));
     } else if (!g_strcmp0(name, "KeyMgmt")) {
-        static const GSupNameIntPair keymgmt_map [] = {
-            { "wpa-psk",        GSUPPLICANT_KEYMGMT_WPA_PSK },
-            { "wpa-ft-psk",     GSUPPLICANT_KEYMGMT_WPA_FT_PSK },
-            { "wpa-psk-sha256", GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256 },
-            { "wpa-eap",        GSUPPLICANT_KEYMGMT_WPA_EAP },
-            { "wpa-ft-eap",     GSUPPLICANT_KEYMGMT_WPA_FT_EAP },
-            { "wpa-eap-sha256", GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256 },
-            { "ieee8021x",      GSUPPLICANT_KEYMGMT_IEEE8021X },
-            { "wpa-none",       GSUPPLICANT_KEYMGMT_WPA_NONE },
-            { "wps",            GSUPPLICANT_KEYMGMT_WPS },
-            { "none",           GSUPPLICANT_KEYMGMT_NONE }
-        };
-        caps->keymgmt = gsupplicant_parse_bits_array(0, name, value,
-            keymgmt_map, G_N_ELEMENTS(keymgmt_map));
+        caps->keymgmt = gsupplicant_parse_keymgmt_list(name, value);
     } else if (!g_strcmp0(name, "Protocol")) {
         static const GSupNameIntPair protocol_map [] = {
             { "rsn",            GSUPPLICANT_PROTOCOL_RSN },

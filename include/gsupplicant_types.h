@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2020 Jolla Ltd.
- * Copyright (C) 2015-2020 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -66,7 +66,11 @@ typedef enum gsupplicant_keymgmt {
     GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256  = (0x00000040),
     GSUPPLICANT_KEYMGMT_IEEE8021X       = (0x00000080),
     GSUPPLICANT_KEYMGMT_WPA_NONE        = (0x00000100),
-    GSUPPLICANT_KEYMGMT_WPS             = (0x00000200)
+    GSUPPLICANT_KEYMGMT_WPS             = (0x00000200),
+    GSUPPLICANT_KEYMGMT_SAE             = (0x00000400), /* Since 1.0.27 */
+    GSUPPLICANT_KEYMGMT_SAE_EXT_KEY     = (0x00000800), /* Since 1.0.27 */
+    GSUPPLICANT_KEYMGMT_FT_SAE          = (0x00001000), /* Since 1.0.27 */
+    GSUPPLICANT_KEYMGMT_FT_SAE_EXT_KEY  = (0x00002000)  /* Since 1.0.27 */
 } GSUPPLICANT_KEYMGMT;
 
 typedef enum gsupplicant_protocol {

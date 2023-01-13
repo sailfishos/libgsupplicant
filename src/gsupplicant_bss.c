@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 Jolla Ltd.
- * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -34,6 +34,7 @@
 
 #include "gsupplicant_bss.h"
 #include "gsupplicant_interface.h"
+#include "gsupplicant_p.h"
 #include "gsupplicant_util_p.h"
 #include "gsupplicant_dbus.h"
 #include "gsupplicant_log.h"
@@ -481,13 +482,7 @@ gsupplicant_bss_parse_wpa(
 {
     GSupplicantBSSWPA* wpa = data;
     if (!g_strcmp0(name, "KeyMgmt")) {
-        static const GSupNameIntPair keymgmt_map [] = {
-            { "wpa-psk",        GSUPPLICANT_KEYMGMT_WPA_PSK },
-            { "wpa-eap",        GSUPPLICANT_KEYMGMT_WPA_EAP },
-            { "wpa-none",       GSUPPLICANT_KEYMGMT_WPA_NONE }
-        };
-        wpa->keymgmt = gsupplicant_parse_bits_array(0, name, value,
-            keymgmt_map, G_N_ELEMENTS(keymgmt_map));
+        wpa->keymgmt = gsupplicant_parse_keymgmt_list(name, value);
     } else if (!g_strcmp0(name, "Pairwise")) {
         static const GSupNameIntPair pairwise_map [] = {
             { "ccmp",           GSUPPLICANT_CIPHER_CCMP },
@@ -553,16 +548,7 @@ gsupplicant_bss_parse_rsn(
 {
     GSupplicantBSSRSN* rsn = data;
     if (!g_strcmp0(name, "KeyMgmt")) {
-        static const GSupNameIntPair keymgmt_map [] = {
-            { "wpa-psk",        GSUPPLICANT_KEYMGMT_WPA_PSK },
-            { "wpa-eap",        GSUPPLICANT_KEYMGMT_WPA_EAP },
-            { "wpa-ft-psk",     GSUPPLICANT_KEYMGMT_WPA_FT_PSK },
-            { "wpa-ft-eap",     GSUPPLICANT_KEYMGMT_WPA_FT_EAP },
-            { "wpa-psk-sha256", GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256 },
-            { "wpa-eap-sha256", GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256 },
-        };
-        rsn->keymgmt = gsupplicant_parse_bits_array(0, name, value,
-            keymgmt_map, G_N_ELEMENTS(keymgmt_map));
+        rsn->keymgmt = gsupplicant_parse_keymgmt_list(name, value);
     } else if (!g_strcmp0(name, "Pairwise")) {
         static const GSupNameIntPair pairwise_map [] = {
             { "ccmp",       GSUPPLICANT_CIPHER_CCMP },
