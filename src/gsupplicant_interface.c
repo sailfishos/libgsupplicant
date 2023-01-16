@@ -1491,7 +1491,7 @@ gsupplicant_interface_parse_cap(
             scan_map, G_N_ELEMENTS(scan_map));
     } else if (!g_strcmp0(name, "Modes")) {
         static const GSupNameIntPair modes_map [] = {
-            { "infrastructure", GSUPPLICANT_INTERFACE_CAPS_MODES_INFRA},
+            { "infrastructure", GSUPPLICANT_INTERFACE_CAPS_MODES_INFRA },
             { "ad-hoc",         GSUPPLICANT_INTERFACE_CAPS_MODES_AD_HOC },
             { "ap",             GSUPPLICANT_INTERFACE_CAPS_MODES_AP },
             { "p2p",            GSUPPLICANT_INTERFACE_CAPS_MODES_P2P }
@@ -1501,6 +1501,15 @@ gsupplicant_interface_parse_cap(
     } else if (!g_strcmp0(name, "MaxScanSSID")) {
         caps->max_scan_ssid = g_variant_get_int32(value);
         GVERBOSE("  %s: %d", name, caps->max_scan_ssid);
+    } else if (!g_strcmp0(name, "GroupMgmt")) {
+        static const GSupNameIntPair group_mgmt_map [] = {
+            {"aes-128-cmac",GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP },
+            {"bip-gmac-128",GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_GMAC_128},
+            {"bip-gmac-256",GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_GMAC_256},
+            {"bip-cmac-256",GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_CMAC_256}
+        };
+        caps->group_mgmt = gsupplicant_parse_bits_array(0, name, value,
+            group_mgmt_map, G_N_ELEMENTS(group_mgmt_map));
     } else {
         GWARN("Unexpected interface capability key %s", name);
     }
