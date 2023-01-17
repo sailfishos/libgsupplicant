@@ -1,3 +1,10 @@
+libgsupplicant (1.0.27) unstable; urgency=low
+
+  * Adapt to wpa_supplicant D-Bus interface changes
+  * Bumped debhelper compat level to 7
+
+ -- Slava Monich <slava@monich.com>  Tue, 17 Jan 2023 20:20:20 +0200
+
 libgsupplicant (1.0.26) unstable; urgency=low
 
   * Housekeeping release
