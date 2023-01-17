@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 Jolla Ltd.
- * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -177,7 +177,10 @@ static const GSupNameIntPair gsupplicant_cipher_suites [] = {
     { "tkip",           GSUPPLICANT_CIPHER_TKIP },
     { "wep104",         GSUPPLICANT_CIPHER_WEP104 },
     { "wep40",          GSUPPLICANT_CIPHER_WEP40 },
-    { "aes128cmac",     GSUPPLICANT_CIPHER_AES128_CMAC }
+    { "aes128cmac",     GSUPPLICANT_CIPHER_AES128_CMAC },
+    { "ccmp-256",       GSUPPLICANT_CIPHER_CCMP_256 },
+    { "gcmp",           GSUPPLICANT_CIPHER_GCMP },
+    { "gcmp-256",       GSUPPLICANT_CIPHER_GCMP_256 }
 };
 
 static const GSupNameIntPair gsupplicant_keymgmt_suites [] = {
@@ -190,7 +193,11 @@ static const GSupNameIntPair gsupplicant_keymgmt_suites [] = {
     { "wpa-eap-sha256", GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256 },
     { "ieee8021x",      GSUPPLICANT_KEYMGMT_IEEE8021X },
     { "wpa-none",       GSUPPLICANT_KEYMGMT_WPA_NONE },
-    { "wps",            GSUPPLICANT_KEYMGMT_WPS }
+    { "wps",            GSUPPLICANT_KEYMGMT_WPS },
+    { "sae",            GSUPPLICANT_KEYMGMT_SAE },
+    { "sae-ext-key",    GSUPPLICANT_KEYMGMT_SAE_EXT_KEY },
+    { "ft-sae",         GSUPPLICANT_KEYMGMT_FT_SAE },
+    { "ft-sae-ext-key", GSUPPLICANT_KEYMGMT_FT_SAE_EXT_KEY }
 };
 
 /*==========================================================================*
@@ -887,6 +894,37 @@ gsupplicant_keymgmt_suite_name(
     guint* keymgmt_suite)
 {
     return gsupplicant_name_int_find_bit(keymgmt_suites, keymgmt_suite,
+        gsupplicant_keymgmt_suites, G_N_ELEMENTS(gsupplicant_keymgmt_suites));
+}
+
+/*==========================================================================*
+ * Internal API
+ *==========================================================================*/
+
+GSUPPLICANT_CIPHER
+gsupplicant_parse_cipher_value(
+    const char* name,
+    GVariant* value)
+{
+    return gsupplicant_parse_bit_value(name, value,
+        gsupplicant_cipher_suites, G_N_ELEMENTS(gsupplicant_cipher_suites));
+}
+
+GSUPPLICANT_CIPHER
+gsupplicant_parse_cipher_list(
+    const char* name,
+    GVariant* value)
+{
+    return gsupplicant_parse_bits_array(0, name, value,
+        gsupplicant_cipher_suites, G_N_ELEMENTS(gsupplicant_cipher_suites));
+}
+
+GSUPPLICANT_KEYMGMT
+gsupplicant_parse_keymgmt_list(
+    const char* name,
+    GVariant* value)
+{
+    return gsupplicant_parse_bits_array(0, name, value,
         gsupplicant_keymgmt_suites, G_N_ELEMENTS(gsupplicant_keymgmt_suites));
 }
 

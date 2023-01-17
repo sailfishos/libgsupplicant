@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 Jolla Ltd.
- * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -34,6 +34,7 @@
 
 #include "gsupplicant_bss.h"
 #include "gsupplicant_interface.h"
+#include "gsupplicant_p.h"
 #include "gsupplicant_util_p.h"
 #include "gsupplicant_dbus.h"
 #include "gsupplicant_log.h"
@@ -481,37 +482,11 @@ gsupplicant_bss_parse_wpa(
 {
     GSupplicantBSSWPA* wpa = data;
     if (!g_strcmp0(name, "KeyMgmt")) {
-        static const GSupNameIntPair keymgmt_map [] = {
-            { "wpa-psk",        GSUPPLICANT_KEYMGMT_WPA_PSK },
-            { "wpa-eap",        GSUPPLICANT_KEYMGMT_WPA_EAP },
-            { "wpa-none",       GSUPPLICANT_KEYMGMT_WPA_NONE }
-        };
-        wpa->keymgmt = gsupplicant_parse_bits_array(0, name, value,
-            keymgmt_map, G_N_ELEMENTS(keymgmt_map));
+        wpa->keymgmt = gsupplicant_parse_keymgmt_list(name, value);
     } else if (!g_strcmp0(name, "Pairwise")) {
-        static const GSupNameIntPair pairwise_map [] = {
-            { "ccmp",           GSUPPLICANT_CIPHER_CCMP },
-            { "tkip",           GSUPPLICANT_CIPHER_TKIP }
-        };
-        wpa->pairwise = gsupplicant_parse_bits_array(0, name, value,
-            pairwise_map, G_N_ELEMENTS(pairwise_map));
+        wpa->pairwise = gsupplicant_parse_cipher_list(name, value);
     } else if (!g_strcmp0(name, "Group")) {
-        static const GSupNameIntPair group_map [] = {
-            { "ccmp",           GSUPPLICANT_CIPHER_CCMP },
-            { "tkip",           GSUPPLICANT_CIPHER_TKIP },
-            { "wep104",         GSUPPLICANT_CIPHER_WEP104 },
-            { "wep40",          GSUPPLICANT_CIPHER_WEP40 }
-        };
-        GASSERT(g_variant_is_of_type(value, G_VARIANT_TYPE_STRING));
-        if (g_variant_is_of_type(value, G_VARIANT_TYPE_STRING)) {
-            const char* str = g_variant_get_string(value, NULL);
-            const GSupNameIntPair* pair = gsupplicant_name_int_find_name(str,
-                group_map, G_N_ELEMENTS(group_map));
-            if (pair) {
-                GVERBOSE("  %s: %s", name, str);
-                wpa->group = pair->value;
-            }
-        }
+        wpa->group = gsupplicant_parse_cipher_value(name, value);
     } else {
         GWARN("Unexpected WPA dictionary key %s", name);
     }
@@ -553,54 +528,13 @@ gsupplicant_bss_parse_rsn(
 {
     GSupplicantBSSRSN* rsn = data;
     if (!g_strcmp0(name, "KeyMgmt")) {
-        static const GSupNameIntPair keymgmt_map [] = {
-            { "wpa-psk",        GSUPPLICANT_KEYMGMT_WPA_PSK },
-            { "wpa-eap",        GSUPPLICANT_KEYMGMT_WPA_EAP },
-            { "wpa-ft-psk",     GSUPPLICANT_KEYMGMT_WPA_FT_PSK },
-            { "wpa-ft-eap",     GSUPPLICANT_KEYMGMT_WPA_FT_EAP },
-            { "wpa-psk-sha256", GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256 },
-            { "wpa-eap-sha256", GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256 },
-        };
-        rsn->keymgmt = gsupplicant_parse_bits_array(0, name, value,
-            keymgmt_map, G_N_ELEMENTS(keymgmt_map));
+        rsn->keymgmt = gsupplicant_parse_keymgmt_list(name, value);
     } else if (!g_strcmp0(name, "Pairwise")) {
-        static const GSupNameIntPair pairwise_map [] = {
-            { "ccmp",       GSUPPLICANT_CIPHER_CCMP },
-            { "tkip",       GSUPPLICANT_CIPHER_TKIP }
-        };
-        rsn->pairwise = gsupplicant_parse_bits_array(0, name, value,
-            pairwise_map, G_N_ELEMENTS(pairwise_map));
+        rsn->pairwise = gsupplicant_parse_cipher_list(name, value);
     } else if (!g_strcmp0(name, "Group")) {
-        static const GSupNameIntPair group_map [] = {
-            { "ccmp",       GSUPPLICANT_CIPHER_CCMP },
-            { "tkip",       GSUPPLICANT_CIPHER_TKIP },
-            { "wep104",     GSUPPLICANT_CIPHER_WEP104 },
-            { "wep40",      GSUPPLICANT_CIPHER_WEP40 }
-        };
-        GASSERT(g_variant_is_of_type(value, G_VARIANT_TYPE_STRING));
-        if (g_variant_is_of_type(value, G_VARIANT_TYPE_STRING)) {
-            const char* str = g_variant_get_string(value, NULL);
-            const GSupNameIntPair* pair = gsupplicant_name_int_find_name(str,
-                group_map, G_N_ELEMENTS(group_map));
-            if (pair) {
-                GVERBOSE("  %s: %s", name, str);
-                rsn->group = pair->value;
-            }
-        }
+        rsn->group = gsupplicant_parse_cipher_value(name, value);
     } else if (!g_strcmp0(name, "MgmtGroup")) {
-        static const GSupNameIntPair mgmt_group_map [] = {
-            { "aes128cmac", GSUPPLICANT_CIPHER_AES128_CMAC }
-        };
-        GASSERT(g_variant_is_of_type(value, G_VARIANT_TYPE_STRING));
-        if (g_variant_is_of_type(value, G_VARIANT_TYPE_STRING)) {
-            const char* str = g_variant_get_string(value, NULL);
-            const GSupNameIntPair* pair = gsupplicant_name_int_find_name(str,
-                mgmt_group_map, G_N_ELEMENTS(mgmt_group_map));
-            if (pair) {
-                GVERBOSE("  %s: %s", name, str);
-                rsn->mgmt_group = pair->value;
-            }
-        }
+        rsn->mgmt_group = gsupplicant_parse_cipher_value(name, value);
     } else {
         GWARN("Unexpected RSN dictionary key %s", name);
     }

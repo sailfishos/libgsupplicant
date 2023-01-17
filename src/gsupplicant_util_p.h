@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 Jolla Ltd.
- * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -48,6 +48,14 @@ void
     const char* key,
     GVariant* value,
     void* data);
+
+guint32
+gsupplicant_parse_bit_value(
+    const char* name,
+    GVariant* value,
+    const GSupNameIntPair* map,
+    gsize count)
+    GSUPPLICANT_INTERNAL;
 
 guint32
 gsupplicant_parse_bits_array(

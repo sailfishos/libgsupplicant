@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2020 Jolla Ltd.
- * Copyright (C) 2015-2020 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -52,7 +52,10 @@ typedef enum gsupplicant_cipher {
     GSUPPLICANT_CIPHER_TKIP             = (0x00000004),
     GSUPPLICANT_CIPHER_WEP104           = (0x00000008),
     GSUPPLICANT_CIPHER_WEP40            = (0x00000010),
-    GSUPPLICANT_CIPHER_AES128_CMAC      = (0x00000020)
+    GSUPPLICANT_CIPHER_AES128_CMAC      = (0x00000020),
+    GSUPPLICANT_CIPHER_CCMP_256         = (0x00000040), /* Since 1.0.27 */
+    GSUPPLICANT_CIPHER_GCMP             = (0x00000080), /* Since 1.0.27 */
+    GSUPPLICANT_CIPHER_GCMP_256         = (0x00000100)  /* Since 1.0.27 */
 } GSUPPLICANT_CIPHER;
 
 typedef enum gsupplicant_keymgmt {
@@ -66,7 +69,11 @@ typedef enum gsupplicant_keymgmt {
     GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256  = (0x00000040),
     GSUPPLICANT_KEYMGMT_IEEE8021X       = (0x00000080),
     GSUPPLICANT_KEYMGMT_WPA_NONE        = (0x00000100),
-    GSUPPLICANT_KEYMGMT_WPS             = (0x00000200)
+    GSUPPLICANT_KEYMGMT_WPS             = (0x00000200),
+    GSUPPLICANT_KEYMGMT_SAE             = (0x00000400), /* Since 1.0.27 */
+    GSUPPLICANT_KEYMGMT_SAE_EXT_KEY     = (0x00000800), /* Since 1.0.27 */
+    GSUPPLICANT_KEYMGMT_FT_SAE          = (0x00001000), /* Since 1.0.27 */
+    GSUPPLICANT_KEYMGMT_FT_SAE_EXT_KEY  = (0x00002000)  /* Since 1.0.27 */
 } GSUPPLICANT_KEYMGMT;
 
 typedef enum gsupplicant_protocol {

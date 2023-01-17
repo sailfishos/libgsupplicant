@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 Jolla Ltd.
- * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -36,6 +36,7 @@
 #include "gsupplicant_network.h"
 #include "gsupplicant_bss.h"
 #include "gsupplicant.h"
+#include "gsupplicant_p.h"
 #include "gsupplicant_util_p.h"
 #include "gsupplicant_dbus.h"
 #include "gsupplicant_log.h"
@@ -1460,37 +1461,11 @@ gsupplicant_interface_parse_cap(
 {
     GSupplicantInterfaceCaps* caps = data;
     if (!g_strcmp0(name, "Pairwise")) {
-        static const GSupNameIntPair pairwise_map [] = {
-            { "ccmp",           GSUPPLICANT_CIPHER_CCMP },
-            { "tkip",           GSUPPLICANT_CIPHER_TKIP },
-            { "none",           GSUPPLICANT_CIPHER_NONE }
-        };
-        caps->pairwise = gsupplicant_parse_bits_array(0, name, value,
-            pairwise_map, G_N_ELEMENTS(pairwise_map));
+        caps->pairwise = gsupplicant_parse_cipher_list(name, value);
     } else if (!g_strcmp0(name, "Group")) {
-        static const GSupNameIntPair group_map [] = {
-            { "ccmp",           GSUPPLICANT_CIPHER_CCMP },
-            { "tkip",           GSUPPLICANT_CIPHER_TKIP },
-            { "wep104",         GSUPPLICANT_CIPHER_WEP104 },
-            { "wep40",          GSUPPLICANT_CIPHER_WEP40 }
-        };
-        caps->group = gsupplicant_parse_bits_array(0, name, value,
-            group_map, G_N_ELEMENTS(group_map));
+        caps->group = gsupplicant_parse_cipher_list(name, value);
     } else if (!g_strcmp0(name, "KeyMgmt")) {
-        static const GSupNameIntPair keymgmt_map [] = {
-            { "wpa-psk",        GSUPPLICANT_KEYMGMT_WPA_PSK },
-            { "wpa-ft-psk",     GSUPPLICANT_KEYMGMT_WPA_FT_PSK },
-            { "wpa-psk-sha256", GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256 },
-            { "wpa-eap",        GSUPPLICANT_KEYMGMT_WPA_EAP },
-            { "wpa-ft-eap",     GSUPPLICANT_KEYMGMT_WPA_FT_EAP },
-            { "wpa-eap-sha256", GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256 },
-            { "ieee8021x",      GSUPPLICANT_KEYMGMT_IEEE8021X },
-            { "wpa-none",       GSUPPLICANT_KEYMGMT_WPA_NONE },
-            { "wps",            GSUPPLICANT_KEYMGMT_WPS },
-            { "none",           GSUPPLICANT_KEYMGMT_NONE }
-        };
-        caps->keymgmt = gsupplicant_parse_bits_array(0, name, value,
-            keymgmt_map, G_N_ELEMENTS(keymgmt_map));
+        caps->keymgmt = gsupplicant_parse_keymgmt_list(name, value);
     } else if (!g_strcmp0(name, "Protocol")) {
         static const GSupNameIntPair protocol_map [] = {
             { "rsn",            GSUPPLICANT_PROTOCOL_RSN },
@@ -1516,7 +1491,7 @@ gsupplicant_interface_parse_cap(
             scan_map, G_N_ELEMENTS(scan_map));
     } else if (!g_strcmp0(name, "Modes")) {
         static const GSupNameIntPair modes_map [] = {
-            { "infrastructure", GSUPPLICANT_INTERFACE_CAPS_MODES_INFRA},
+            { "infrastructure", GSUPPLICANT_INTERFACE_CAPS_MODES_INFRA },
             { "ad-hoc",         GSUPPLICANT_INTERFACE_CAPS_MODES_AD_HOC },
             { "ap",             GSUPPLICANT_INTERFACE_CAPS_MODES_AP },
             { "p2p",            GSUPPLICANT_INTERFACE_CAPS_MODES_P2P }
@@ -1526,6 +1501,15 @@ gsupplicant_interface_parse_cap(
     } else if (!g_strcmp0(name, "MaxScanSSID")) {
         caps->max_scan_ssid = g_variant_get_int32(value);
         GVERBOSE("  %s: %d", name, caps->max_scan_ssid);
+    } else if (!g_strcmp0(name, "GroupMgmt")) {
+        static const GSupNameIntPair group_mgmt_map [] = {
+            {"aes-128-cmac",GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP },
+            {"bip-gmac-128",GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_GMAC_128},
+            {"bip-gmac-256",GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_GMAC_256},
+            {"bip-cmac-256",GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_CMAC_256}
+        };
+        caps->group_mgmt = gsupplicant_parse_bits_array(0, name, value,
+            group_mgmt_map, G_N_ELEMENTS(group_mgmt_map));
     } else {
         GWARN("Unexpected interface capability key %s", name);
     }

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2021 Jolla Ltd.
- * Copyright (C) 2015-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -160,6 +160,32 @@ gsupplicant_name_int_concat(
 }
 
 guint32
+gsupplicant_parse_bit_value(
+    const char* name,
+    GVariant* value,
+    const GSupNameIntPair* map,
+    gsize count)
+{
+    if (g_variant_is_of_type(value, G_VARIANT_TYPE_STRING)) {
+        const char* str = g_variant_get_string(value, NULL);
+        const GSupNameIntPair* pair = gsupplicant_name_int_find_name(str,
+            map, count);
+        if (pair) {
+            GVERBOSE("  %s: %s", name, str);
+            return pair->value;
+        } else if (!str[0]) {
+            /* Don't complain about empty strings, just return zero */
+            GVERBOSE("  %s: ", name);
+        } else {
+            GWARN("Unexpected %s value %s", name, str);
+        }
+    } else {
+        GWARN("Unexpected value type for %s", name);
+    }
+    return 0;
+}
+
+guint32
 gsupplicant_parse_bits_array(
     guint32 mask,
     const char* name,
@@ -167,7 +193,7 @@ gsupplicant_parse_bits_array(
     const GSupNameIntPair* map,
     gsize count)
 {
-    if (g_variant_is_of_type(value, G_VARIANT_TYPE("as"))) {
+    if (g_variant_is_of_type(value, G_VARIANT_TYPE_STRING_ARRAY)) {
         GVariantIter it;
         char* str = NULL;
 #if GUTIL_LOG_VERBOSE

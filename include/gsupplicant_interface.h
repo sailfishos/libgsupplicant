@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2020 Jolla Ltd.
- * Copyright (C) 2015-2020 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -104,7 +104,14 @@ typedef struct gsupplicant_interface_caps {
 #define GSUPPLICANT_INTERFACE_CAPS_MODES_P2P        (0x00000008)
 
     gint max_scan_ssid;
-    guint caps_reserved[2];
+    guint group_mgmt;  /* Used since 1.0.27 */
+
+#define GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP           (0x00000001)
+#define GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_GMAC_128  (0x00000002)
+#define GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_GMAC_256  (0x00000004)
+#define GSUPPLICANT_INTERFACE_CAPS_GROUP_MGMT_BIP_CMAC_256  (0x00000008)
+
+    guint caps_reserved;
 } GSupplicantInterfaceCaps;
 
 typedef struct gsupplicant_signal_poll {

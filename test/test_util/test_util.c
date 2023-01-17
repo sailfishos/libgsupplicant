@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2017-2021 Jolla Ltd.
- * Copyright (C) 2017-2021 Slava Monich <slava.monich@jolla.com>
+ * Copyright (C) 2023 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of BSD license as follows:
  *
@@ -205,6 +205,7 @@ test_util_parse_bits_array(
 {
     GVariantBuilder builder;
     GVariant* var;
+
     g_variant_builder_init(&builder, G_VARIANT_TYPE("ai"));
     g_variant_builder_add_value(&builder, g_variant_new_int32(0));
     var = g_variant_ref_sink(g_variant_builder_end(&builder));
@@ -218,8 +219,45 @@ test_util_parse_bits_array(
     g_variant_builder_add_value(&builder, g_variant_new_string("unknown"));
     var = g_variant_ref_sink(g_variant_builder_end(&builder));
 
-    g_assert(gsupplicant_parse_bits_array(0, "test", var,
-        test_map, G_N_ELEMENTS(test_map)) == BIT_FOO);
+    g_assert_cmpuint(gsupplicant_parse_bits_array(0, "test", var,
+        test_map, G_N_ELEMENTS(test_map)), == ,BIT_FOO);
+    g_variant_unref(var);
+}
+
+/*==========================================================================*
+ * parse_bit_value
+ *==========================================================================*/
+
+static
+void
+test_util_parse_bit_value(
+    void)
+{
+    GVariant* var;
+
+    /* Unexpected type */
+    var = g_variant_ref_sink(g_variant_new_int32(0));
+    g_assert(!gsupplicant_parse_bit_value("test", var,
+        test_map, G_N_ELEMENTS(test_map)));
+    g_variant_unref(var);
+
+    /* Unexpected value */
+    var = g_variant_new_string("unknown");
+    g_assert(!gsupplicant_parse_bit_value("test", var,
+        test_map, G_N_ELEMENTS(test_map)));
+    g_variant_unref(var);
+
+    /* Empty string */
+    var = g_variant_new_string("");
+    g_assert(!gsupplicant_parse_bit_value("test", var, NULL, 0));
+    g_assert(gsupplicant_parse_bit_value("test", var, test_map,
+        G_N_ELEMENTS(test_map))); /* This map contains empty string */
+    g_variant_unref(var);
+
+    /* Success */
+    var = g_variant_new_string(test_map->name);
+    g_assert_cmpuint(gsupplicant_parse_bit_value("test", var,
+        test_map, G_N_ELEMENTS(test_map)), == ,test_map->value);
     g_variant_unref(var);
 }
 
@@ -394,6 +432,7 @@ test_util_dict_parse(
     g_variant_builder_init(&builder, G_VARIANT_TYPE_VARDICT);
     gsupplicant_dict_add_boolean(&builder, "true", TRUE);
     gsupplicant_dict_add_uint32(&builder, "one", 1);
+    gsupplicant_dict_add_value(&builder, "two", g_variant_new_uint32(2));
     gsupplicant_dict_add_string0(&builder, NULL, NULL);
     gsupplicant_dict_add_string0(&builder, NULL, "ignored");
     gsupplicant_dict_add_string0(&builder, "string", NULL);
@@ -409,13 +448,16 @@ test_util_dict_parse(
     gsupplicant_dict_add_bytes0(&builder, "bytes", test_bytes);
     dict = g_variant_ref_sink(g_variant_builder_end(&builder));
     GDEBUG_("%u", (guint)g_variant_n_children(dict));
-    g_assert(g_variant_n_children(dict) == 5);
+    g_assert_cmpuint(g_variant_n_children(dict), == ,6);
 
     g_assert(!gsupplicant_dict_parse(NULL, test_util_dict_cb, values));
     g_assert(!g_hash_table_size(values));
-    g_assert(gsupplicant_dict_parse(dict, test_util_dict_cb, values) == 5);
+    g_assert(gsupplicant_dict_parse(dict, test_util_dict_cb, values) == 6);
     g_assert(g_variant_get_boolean(g_hash_table_lookup(values, "true")));
-    g_assert(g_variant_get_uint32(g_hash_table_lookup(values, "one")) == 1);
+    g_assert_cmpuint(g_variant_get_uint32(g_hash_table_lookup(values,
+        "one")), == ,1);
+    g_assert_cmpuint(g_variant_get_uint32(g_hash_table_lookup(values,
+        "two")), == ,2);
     g_assert(!g_strcmp0(g_variant_get_string(g_hash_table_lookup(values,
         "string"), NULL), "string"));
     g_assert(!g_strcmp0(g_variant_get_string(g_hash_table_lookup(values,
@@ -562,6 +604,7 @@ int main(int argc, char* argv[])
     g_test_init(&argc, &argv, NULL);
     g_test_add_func(TEST_PREFIX "name_int", test_util_name_int);
     g_test_add_func(TEST_PREFIX "parse_bits_array", test_util_parse_bits_array);
+    g_test_add_func(TEST_PREFIX "parse_bit_value", test_util_parse_bit_value);
     g_test_add_func(TEST_PREFIX "format_bytes", test_util_format_bytes);
     g_test_add_func(TEST_PREFIX "cancel_later", test_util_cancel_later);
     g_test_add_func(TEST_PREFIX "abs_path", test_util_abs_path);
