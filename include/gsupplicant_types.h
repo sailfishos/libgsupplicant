@@ -164,6 +164,12 @@ typedef enum gsupplicant_security {
     GSUPPLICANT_SECURITY_EAP,
 } GSUPPLICANT_SECURITY;
 
+typedef enum gsupplicant_mfp_options {
+    GSUPPLICANT_MFP_NONE,
+    GSUPPLICANT_MFP_OPTIONAL,
+    GSUPPLICANT_MFP_REQUIRED,
+} GSUPPLICANT_MFP_OPTIONS;
+
 typedef struct gsupplicant_uint_array {
     const guint* values;
     guint count;

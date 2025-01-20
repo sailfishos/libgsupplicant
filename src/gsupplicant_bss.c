@@ -282,6 +282,7 @@ gsupplicant_bss_fill_network_params(
     np->subject_match2 = cp->subject_match2;
     np->altsubject_match2 = cp->altsubject_match2;
     np->domain_suffix_match2 = cp->domain_suffix_match2;
+    np->keymgmt = gsupplicant_bss_keymgmt(bss);
 }
 
 static inline
@@ -1278,7 +1279,8 @@ gsupplicant_bss_security(
         }
         if (keymgmt & (GSUPPLICANT_KEYMGMT_WPA_PSK |
                        GSUPPLICANT_KEYMGMT_WPA_FT_PSK |
-                       GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256)) {
+                       GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256 |
+                       GSUPPLICANT_KEYMGMT_SAE)) {
             return GSUPPLICANT_SECURITY_PSK;
         }
         if (self->privacy) {

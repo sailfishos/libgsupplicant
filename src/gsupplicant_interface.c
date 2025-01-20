@@ -385,6 +385,15 @@ gsupplicant_interface_emit_pending_signals(
 
 static
 void
+gsupplicant_interface_add_network_args_ieee80211w(
+    GVariantBuilder* builder,
+    GSUPPLICANT_MFP_OPTIONS ieee80211w)
+{
+    gsupplicant_dict_add_uint32(builder, "ieee80211w", ieee80211w);
+}
+
+static
+void
 gsupplicant_interface_add_network_args_security_wep(
     GVariantBuilder* builder,
     const GSupplicantNetworkParams* np)
@@ -651,8 +660,29 @@ gsupplicant_interface_add_network_args_new(
         gsupplicant_interface_add_network_args_security_ciphers(&builder, np);
         break;
     case GSUPPLICANT_SECURITY_PSK:
-        GDEBUG_("PSK security");
-        key_mgmt = "WPA-PSK";
+        GDEBUG_("PSK security np->keymgmt %d", np->keymgmt);
+        if (np->keymgmt & GSUPPLICANT_KEYMGMT_SAE) {
+            GDEBUG_("GSUPPLICANT_KEYMGMT_SAE");
+            GSUPPLICANT_MFP_OPTIONS ieee80211w;
+            if (np->keymgmt & GSUPPLICANT_KEYMGMT_WPA_PSK) {
+                GDEBUG_("GSUPPLICANT_KEYMGMT_WPA_PSK");
+                /*
+                 * WPA3-Personal transition mode: supports both
+                 * WPA2-Personal (PSK) and WPA3-Personal (SAE)
+                 */
+                key_mgmt = "SAE WPA-PSK";
+                ieee80211w = GSUPPLICANT_MFP_OPTIONAL;
+            } else {
+                GDEBUG_("no GSUPPLICANT_KEYMGMT_WPA_PSK");
+                key_mgmt = "SAE";
+                ieee80211w = GSUPPLICANT_MFP_REQUIRED;
+            }
+            gsupplicant_interface_add_network_args_ieee80211w(&builder,
+                    ieee80211w);
+        } else {
+            key_mgmt = "WPA-PSK";
+        }
+        GDEBUG_(" GSUPPLICANT_SECURITY_PSK key_mgmt %s", key_mgmt);
         gsupplicant_interface_add_network_args_security_psk(&builder, np);
         gsupplicant_interface_add_network_args_security_proto(&builder, np);
         gsupplicant_interface_add_network_args_security_ciphers(&builder, np);
