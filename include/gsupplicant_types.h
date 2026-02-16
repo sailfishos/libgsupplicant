@@ -162,6 +162,8 @@ typedef enum gsupplicant_security {
     GSUPPLICANT_SECURITY_WEP,
     GSUPPLICANT_SECURITY_PSK,
     GSUPPLICANT_SECURITY_EAP,
+    GSUPPLICANT_SECURITY_PSK_SAE,
+    GSUPPLICANT_SECURITY_SAE,
 } GSUPPLICANT_SECURITY;
 
 typedef enum gsupplicant_mfp_options {

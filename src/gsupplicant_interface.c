@@ -659,7 +659,13 @@ gsupplicant_interface_add_network_args_new(
         gsupplicant_interface_add_network_args_security_wep(&builder, np);
         gsupplicant_interface_add_network_args_security_ciphers(&builder, np);
         break;
+    /*
+     * Maintain compatibility when roaming between WPA2, WPA2/WPA3 and WPA3
+     * networks by handling all cases the same way.
+     */
     case GSUPPLICANT_SECURITY_PSK:
+    case GSUPPLICANT_SECURITY_PSK_SAE:
+    case GSUPPLICANT_SECURITY_SAE:
         GDEBUG_("PSK security np->keymgmt %d", np->keymgmt);
         GSUPPLICANT_MFP_OPTIONS ieee80211w = GSUPPLICANT_MFP_OPTIONAL;
         key_mgmt = "SAE WPA-PSK WPA-PSK-SHA256";
