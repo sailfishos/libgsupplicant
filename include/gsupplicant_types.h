@@ -177,6 +177,17 @@ typedef struct gsupplicant_uint_array {
     guint count;
 } GSupplicantUIntArray;
 
+
+/*
+ * This is used to define the maximum level of WPA3 support that the
+ * device has. For convenience default to full.
+ */
+typedef enum gspupplicant_wpa3_support {            /* Since 1.0.28 */
+    GSUPPLICANT_WPA3_SUPPORT_FULL,
+    GSUPPLICANT_WPA3_SUPPORT_MIXED, /* Support only WPA2+WPA3 mixed */
+    GSUPPLICANT_WPA3_SUPPORT_NONE,
+} GSUPPLICANT_WPA3_SUPPORT;
+
 extern GLogModule GSUPPLICANT_LOG_MODULE;
 
 G_END_DECLS

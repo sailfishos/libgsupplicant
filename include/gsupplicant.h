@@ -57,6 +57,7 @@ struct gsupplicant {
     const GStrV* interfaces;
     GSUPPLICANT_EAP_METHOD eap_methods;
     guint32 caps;
+    unsigned int wpa3_support;          /* Since 1.0.28 */
 
 #define GSUPPLICANT_CAPS_AP             (0x00000001)
 #define GSUPPLICANT_CAPS_IBSS_RSN       (0x00000002)
@@ -178,6 +179,12 @@ const char*
 gsupplicant_keymgmt_suite_name(
     guint keymgmt_suites,
     guint* keymgmt_suite);
+
+/* Since 1.0.28 */
+void
+gsupplicant_set_wpa3_support(
+    GSupplicant *supplicant,
+    GSUPPLICANT_WPA3_SUPPORT wpa3_support);
 
 #define gsupplicant_remove_all_handlers(supplicant, ids) \
     gsupplicant_remove_handlers(supplicant, ids, G_N_ELEMENTS(ids))

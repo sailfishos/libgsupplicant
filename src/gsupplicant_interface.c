@@ -632,12 +632,16 @@ gsupplicant_interface_add_network_args_security_proto(
 static
 GVariant*
 gsupplicant_interface_add_network_args_new(
+    const GSupplicantInterface *iface,
     const GSupplicantNetworkParams* np,
     GHashTable* blobs)
 {
     const char* key_mgmt = NULL;
     const char* auth_alg = NULL;
     GVariantBuilder builder;
+    GSUPPLICANT_WPA3_SUPPORT wpa3_support = GSUPPLICANT_WPA3_SUPPORT_FULL;
+    if (iface && iface->supplicant)
+        wpa3_support = iface->supplicant->wpa3_support;
     g_variant_builder_init(&builder, G_VARIANT_TYPE_VARDICT);
     gsupplicant_dict_add_bytes0(&builder, "ssid", np->ssid);
     if (np->frequency) {
@@ -667,9 +671,17 @@ gsupplicant_interface_add_network_args_new(
     case GSUPPLICANT_SECURITY_PSK_SAE:
     case GSUPPLICANT_SECURITY_SAE:
         GDEBUG_("PSK security np->keymgmt %d", np->keymgmt);
-        GSUPPLICANT_MFP_OPTIONS ieee80211w = GSUPPLICANT_MFP_OPTIONAL;
-        key_mgmt = "SAE WPA-PSK WPA-PSK-SHA256";
-        gsupplicant_interface_add_network_args_ieee80211w(&builder, ieee80211w);
+        // Fully supported or WPA2+WPA3 Mixed
+        if (wpa3_support == GSUPPLICANT_WPA3_SUPPORT_FULL ||
+                wpa3_support == GSUPPLICANT_WPA3_SUPPORT_MIXED) {
+            GSUPPLICANT_MFP_OPTIONS ieee80211w = GSUPPLICANT_MFP_OPTIONAL;
+            key_mgmt = "SAE WPA-PSK WPA-PSK-SHA256";
+            gsupplicant_interface_add_network_args_ieee80211w(&builder,
+                ieee80211w);
+        // Not supported, GSUPPLICANT_WPA3_SUPPORT_NONE
+        } else {
+            key_mgmt = "WPA-PSK WPA-PSK-SHA256";
+        }
         gsupplicant_interface_add_network_args_security_psk(&builder, np);
         gsupplicant_interface_add_network_args_security_proto(&builder, np);
         gsupplicant_interface_add_network_args_security_ciphers(&builder, np);
@@ -1296,7 +1308,8 @@ gsupplicant_interface_add_network_call_new(
         call->blobs = g_hash_table_ref(blobs);
         g_hash_table_iter_init(&call->iter, call->blobs);
     }
-    call->args = gsupplicant_interface_add_network_args_new(np, call->blobs);
+    call->args = gsupplicant_interface_add_network_args_new(iface, np,
+        call->blobs);
     call->iface = gsupplicant_interface_ref(iface);
     call->fn = fn;
     call->destroy = destroy;
