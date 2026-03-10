@@ -671,8 +671,11 @@ gsupplicant_interface_add_network_args_new(
     case GSUPPLICANT_SECURITY_PSK_SAE:
     case GSUPPLICANT_SECURITY_SAE:
         GDEBUG_("PSK security np->keymgmt %d", np->keymgmt);
-        // Fully supported or WPA2+WPA3 Mixed
-        if (wpa3_support == GSUPPLICANT_WPA3_SUPPORT_FULL ||
+        // Force WPA2 for now for all in AP mode ignoring WPA3 support level
+        if (np->mode == GSUPPLICANT_OP_MODE_AP) {
+            key_mgmt = "WPA-PSK";
+        // Fully supported or WPA2+WPA3 Mixed in non-AP mode
+        } else if (wpa3_support == GSUPPLICANT_WPA3_SUPPORT_FULL ||
                 wpa3_support == GSUPPLICANT_WPA3_SUPPORT_MIXED) {
             GSUPPLICANT_MFP_OPTIONS ieee80211w = GSUPPLICANT_MFP_OPTIONAL;
             key_mgmt = "SAE WPA-PSK WPA-PSK-SHA256";
