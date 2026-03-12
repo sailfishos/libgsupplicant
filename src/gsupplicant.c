@@ -897,6 +897,15 @@ gsupplicant_keymgmt_suite_name(
         gsupplicant_keymgmt_suites, G_N_ELEMENTS(gsupplicant_keymgmt_suites));
 }
 
+void
+gsupplicant_set_wpa3_support(
+    GSupplicant *supplicant,
+    GSUPPLICANT_WPA3_SUPPORT wpa3_support)
+{
+    if (supplicant)
+        supplicant->wpa3_support = wpa3_support;
+}
+
 /*==========================================================================*
  * Internal API
  *==========================================================================*/

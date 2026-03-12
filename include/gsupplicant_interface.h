@@ -194,6 +194,7 @@ typedef struct gsupplicant_network_params {
     const char* subject_match2;
     const char* altsubject_match2;
     const char* domain_suffix_match2;
+    GSUPPLICANT_KEYMGMT keymgmt;    /* Since 1.0.28 */
 } GSupplicantNetworkParams;
 
 typedef struct gsupplicant_wps_params {

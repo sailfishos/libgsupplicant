@@ -282,6 +282,7 @@ gsupplicant_bss_fill_network_params(
     np->subject_match2 = cp->subject_match2;
     np->altsubject_match2 = cp->altsubject_match2;
     np->domain_suffix_match2 = cp->domain_suffix_match2;
+    np->keymgmt = gsupplicant_bss_keymgmt(bss);
 }
 
 static inline
@@ -1271,14 +1272,26 @@ gsupplicant_bss_security(
     if (G_LIKELY(self) && self->valid && self->present) {
         GSUPPLICANT_KEYMGMT keymgmt = gsupplicant_bss_keymgmt(self);
         if (keymgmt & (GSUPPLICANT_KEYMGMT_WPA_EAP |
-                       GSUPPLICANT_KEYMGMT_WPA_FT_EAP |
-                       GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256 |
-                       GSUPPLICANT_KEYMGMT_IEEE8021X)) {
+                        GSUPPLICANT_KEYMGMT_WPA_FT_EAP |
+                        GSUPPLICANT_KEYMGMT_WPA_EAP_SHA256 |
+                        GSUPPLICANT_KEYMGMT_IEEE8021X)) {
             return GSUPPLICANT_SECURITY_EAP;
         }
+        if (keymgmt & (GSUPPLICANT_KEYMGMT_SAE |
+                        GSUPPLICANT_KEYMGMT_SAE_EXT_KEY |
+                        GSUPPLICANT_KEYMGMT_FT_SAE |
+                        GSUPPLICANT_KEYMGMT_FT_SAE_EXT_KEY)) {
+            if (keymgmt & (GSUPPLICANT_KEYMGMT_WPA_PSK |
+                            GSUPPLICANT_KEYMGMT_WPA_FT_PSK |
+                            GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256)) {
+                return GSUPPLICANT_SECURITY_PSK_SAE;
+            } else {
+                return GSUPPLICANT_SECURITY_SAE;
+            }
+        }
         if (keymgmt & (GSUPPLICANT_KEYMGMT_WPA_PSK |
-                       GSUPPLICANT_KEYMGMT_WPA_FT_PSK |
-                       GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256)) {
+                        GSUPPLICANT_KEYMGMT_WPA_FT_PSK |
+                        GSUPPLICANT_KEYMGMT_WPA_PSK_SHA256)) {
             return GSUPPLICANT_SECURITY_PSK;
         }
         if (self->privacy) {

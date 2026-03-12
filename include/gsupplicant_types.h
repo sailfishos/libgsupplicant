@@ -162,12 +162,31 @@ typedef enum gsupplicant_security {
     GSUPPLICANT_SECURITY_WEP,
     GSUPPLICANT_SECURITY_PSK,
     GSUPPLICANT_SECURITY_EAP,
+    GSUPPLICANT_SECURITY_PSK_SAE,
+    GSUPPLICANT_SECURITY_SAE,
 } GSUPPLICANT_SECURITY;
+
+typedef enum gsupplicant_mfp_options {
+    GSUPPLICANT_MFP_NONE,
+    GSUPPLICANT_MFP_OPTIONAL,
+    GSUPPLICANT_MFP_REQUIRED,
+} GSUPPLICANT_MFP_OPTIONS;
 
 typedef struct gsupplicant_uint_array {
     const guint* values;
     guint count;
 } GSupplicantUIntArray;
+
+
+/*
+ * This is used to define the maximum level of WPA3 support that the
+ * device has. For convenience default to full.
+ */
+typedef enum gspupplicant_wpa3_support {            /* Since 1.0.28 */
+    GSUPPLICANT_WPA3_SUPPORT_FULL,
+    GSUPPLICANT_WPA3_SUPPORT_MIXED, /* Support only WPA2+WPA3 mixed */
+    GSUPPLICANT_WPA3_SUPPORT_NONE,
+} GSUPPLICANT_WPA3_SUPPORT;
 
 extern GLogModule GSUPPLICANT_LOG_MODULE;
 
