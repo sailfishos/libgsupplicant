@@ -1,3 +1,11 @@
+libgsupplicant (1.0.28) unstable; urgency=low
+
+  * Add WPA3 support, differentiate WPA2+WPA3 mixed and WPA3 SAE
+  * Set MFP as optional with WPA3 to not to break WLAN roaming
+  * Add an option to set the maximum WPA3 support level (ignore in AP mode)
+
+ -- Jussi Laakkonen <jussi.laakkonen@jolla.com>  Thu, 12 Mar 2026 11:33:20 +0200
+
 libgsupplicant (1.0.27) unstable; urgency=low
 
   * Adapt to wpa_supplicant D-Bus interface changes
