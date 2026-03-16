@@ -70,7 +70,9 @@ typedef enum gsupplicant_interface_property {
     GSUPPLICANT_INTERFACE_PROPERTY_NETWORKS,
     GSUPPLICANT_INTERFACE_PROPERTY_SCAN_INTERVAL,
     GSUPPLICANT_INTERFACE_PROPERTY_STATIONS,        /* Since 1.0.7 */
-    GSUPPLICANT_INTERFACE_PROPERTY_COUNT
+    GSUPPLICANT_INTERFACE_PROPERTY_COUNT,
+    GSUPPLICANT_INTERFACE_PROPERTY_SAE_CHECK_MFP,   /* Since 1.0.29 */
+    GSUPPLICANT_INTERFACE_PROPERTY_SAE_PWE,         /* Since 1.0.29 */
 } GSUPPLICANT_INTERFACE_PROPERTY;
 
 typedef enum gsupplicant_interface_eap_event {
@@ -195,6 +197,9 @@ typedef struct gsupplicant_network_params {
     const char* altsubject_match2;
     const char* domain_suffix_match2;
     GSUPPLICANT_KEYMGMT keymgmt;    /* Since 1.0.28 */
+    GSUPPLICANT_SAE_PWE_OPTION sae_pwe; /* Since 1.0.29 */
+    /* Default to 0, with 1 STA to check if PMF is used.*/
+    guint sae_check_mfp;                /* Since 1.0.29 */
 } GSupplicantNetworkParams;
 
 typedef struct gsupplicant_wps_params {
@@ -498,6 +503,12 @@ gsupplicant_interface_add_eap_status_handler(
 GSUPPLICANT_INLINE const char*
 gsupplicant_interface_get_state_name(GSupplicantInterface* iface)
     { return iface ? gsupplicant_interface_state_name(iface->state) : NULL; }
+
+void gsupplicant_interface_set_sae_check_mfp(GSupplicantInterface *iface,
+    gboolean enable); /* Since: 1.0.29 */
+
+void gsupplicant_interface_set_sae_pwe(GSupplicantInterface* iface,
+    GSUPPLICANT_SAE_PWE_OPTION option); /* Since: 1.0.29 */
 
 #define gsupplicant_interface_remove_all_handlers(iface, ids) \
     gsupplicant_interface_remove_handlers(iface, ids, G_N_ELEMENTS(ids))

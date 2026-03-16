@@ -172,6 +172,13 @@ typedef enum gsupplicant_mfp_options {
     GSUPPLICANT_MFP_REQUIRED,
 } GSUPPLICANT_MFP_OPTIONS;
 
+typedef enum gsupplicant_sae_pwe_option {
+    GSUPPLICANT_SAE_PWE_HNP,            /* Hunt-and-peck, the default */
+    GSUPPLICANT_SAE_PWE_H2E,            /* Hash-to-element */
+    GSUPPLICANT_SAE_PWE_BOTH,           /* HnP + H2E */
+    GSUPPLICANT_SAE_PWE_BOTH_FORCE,     /* Force use of HnP + H2E */
+} GSUPPLICANT_SAE_PWE_OPTION;
+
 typedef struct gsupplicant_uint_array {
     const guint* values;
     guint count;

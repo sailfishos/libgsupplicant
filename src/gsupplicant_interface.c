@@ -270,6 +270,8 @@ G_STATIC_ASSERT(G_N_ELEMENTS(gsupplicant_interface_signame) == SIGNAL_COUNT);
 #define PROXY_PROPERTY_NAME_PKCS11_ENGINE_PATH  "PKCS11EnginePath"
 #define PROXY_PROPERTY_NAME_PKCS11_MODULE_PATH  "PKCS11ModulePath"
 #define PROXY_PROPERTY_NAME_DISCONNECT_REASON   "DisconnectReason"
+#define PROXY_PROPERTY_NAME_SAE_CHECK_MFP       "SaeCheckMfp"
+#define PROXY_PROPERTY_NAME_SAE_PWE             "SaePwe"
 
 /* Weak references to the instances of GSupplicantInterface */
 static GHashTable* gsupplicant_interface_table = NULL;
@@ -3170,6 +3172,21 @@ gsupplicant_interface_add_eap_status_handler(
 {
     return G_LIKELY(self) ? g_signal_connect(self, SIGNAL_EAP_NAME,
         G_CALLBACK(fn), data) :  0;
+}
+
+void gsupplicant_interface_set_sae_check_mfp(GSupplicantInterface *self,
+    gboolean enable) /* Since: 1.0.29 */
+{
+    fi_w1_wpa_supplicant1_interface_set_sae_check_mfp(self->priv->proxy,
+        enable ? "1" : "0");
+}
+
+void gsupplicant_interface_set_sae_pwe(GSupplicantInterface* self,
+    GSUPPLICANT_SAE_PWE_OPTION option)  /* Since: 1.0.29 */
+{
+    gchar *value = g_strdup_printf("%u", option);
+    fi_w1_wpa_supplicant1_interface_set_sae_pwe(self->priv->proxy, value);
+    g_free(value);
 }
 
 /*==========================================================================*
