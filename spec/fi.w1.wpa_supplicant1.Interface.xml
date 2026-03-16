@@ -143,6 +143,8 @@
     <property name="PKCS11EnginePath" type="s" access="read"/>
     <property name="PKCS11ModulePath" type="s" access="read"/>
     <property name="DisconnectReason" type="i" access="read"/>
+    <property name="SaeCheckMfp" type="s" access="readwrite"/>
+    <property name="SaePwe" type="s" access="readwrite"/>
     <!--
     <property name="AssocStatusCode" type="i" access="read"/>
     <property name="CtrlInterface" type="s" access="readwrite"/>
