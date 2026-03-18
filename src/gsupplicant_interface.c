@@ -153,6 +153,8 @@ enum supplicant_interface_proxy_handler_id {
     PROXY_NOTIFY_CURRENT_NETWORK,
     PROXY_NOTIFY_BSSS,
     PROXY_NOTIFY_NETWORKS,
+    PROXY_NOTIFY_SAE_CHECK_MFP,
+    PROXY_NOTIFY_SAE_PWE,
     PROXY_EAP,
     PROXY_HANDLER_COUNT
 };
@@ -180,6 +182,8 @@ struct gsupplicant_interface_priv {
     char* bridge_ifname;
     char* current_bss;
     char* current_network;
+    gboolean sae_check_mfp;
+    GSUPPLICANT_SAE_PWE_OPTION sae_pwe;
 };
 
 typedef GObjectClass GSupplicantInterfaceClass;
@@ -207,7 +211,9 @@ G_DEFINE_TYPE(GSupplicantInterface, gsupplicant_interface, G_TYPE_OBJECT)
     p(BSSS,bsss) \
     p(NETWORKS,networks) \
     p(SCAN_INTERVAL,scan-interval) \
-    p(STATIONS,stations)
+    p(STATIONS,stations) \
+    p(SAE_CHECK_MFP,sae-check-mfp) \
+    p(SAE_PWE,sae-pwe)
 
 typedef enum gsupplicant_interface_signal {
 #define SIGNAL_ENUM_(P,p) SIGNAL_##P##_CHANGED,
@@ -1796,6 +1802,60 @@ gsupplicant_interface_update_networks(
 #endif
 }
 
+
+static
+void
+gsupplicant_interface_update_sae_check_mfp(
+    GSupplicantInterface* self)
+{
+    GSupplicantInterfacePriv* priv = self->priv;
+    const char *value_str =
+        fi_w1_wpa_supplicant1_interface_get_sae_check_mfp(priv->proxy);
+    gboolean value = g_strcmp0(value_str, "0") ? TRUE : FALSE;
+
+    if (priv->sae_check_mfp != value) {
+        self->sae_check_mfp = priv->sae_check_mfp = value;
+        priv->pending_signals |= SIGNAL_BIT(SAE_CHECK_MFP);
+        GVERBOSE("[%s] %s: %d", priv->path, PROXY_PROPERTY_NAME_SAE_CHECK_MFP,
+            self->sae_check_mfp);
+    }
+}
+
+static
+void
+gsupplicant_interface_update_sae_pwe(
+    GSupplicantInterface* self)
+{
+    GSupplicantInterfacePriv* priv = self->priv;
+    const char* value_str =
+        fi_w1_wpa_supplicant1_interface_get_sae_pwe(priv->proxy);
+    gchar *endptr = NULL;
+    guint value;
+
+    value = g_ascii_strtoull(value_str, &endptr, 10);
+    if (!value) {
+        /* Out of base or string conversion fails*/
+        if (errno == 0 && endptr != value_str) {
+            GVERBOSE("[%s] %s: failed to convert %s, default to HnP (0)",
+                priv->path, PROXY_PROPERTY_NAME_SAE_PWE, value_str);
+        }  
+    }
+
+    /* Not set or too big, default to GSUPPLICANT_SAE_PWE_HNP */
+    if (value >= 4) {
+        GVERBOSE("[%s] %s: value too big %u, default to HnP (0)",
+            priv->path, PROXY_PROPERTY_NAME_SAE_PWE, value);
+        value = 0;
+    }
+
+    if (priv->sae_pwe != value) {
+        self->sae_pwe = priv->sae_pwe = (GSUPPLICANT_SAE_PWE_OPTION)value;
+        priv->pending_signals |= SIGNAL_BIT(SAE_PWE);
+        GVERBOSE("[%s] %s: %u", priv->path, PROXY_PROPERTY_NAME_SAE_PWE,
+            self->sae_pwe);
+    }
+}
+
 static
 void
 gsupplicant_interface_notify_state(
@@ -1951,6 +2011,31 @@ gsupplicant_interface_notify_networks(
     gsupplicant_interface_update_networks(self);
     gsupplicant_interface_emit_pending_signals(self);
 }
+
+static
+void
+gsupplicant_interface_notify_sae_check_mfp(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_sae_check_mfp(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
+static
+void
+gsupplicant_interface_notify_sae_pwe(
+    FiW1Wpa_supplicant1Interface* proxy,
+    GParamSpec* param,
+    gpointer data)
+{
+    GSupplicantInterface* self = GSUPPLICANT_INTERFACE(data);
+    gsupplicant_interface_update_sae_pwe(self);
+    gsupplicant_interface_emit_pending_signals(self);
+}
+
 
 static
 void
@@ -2235,6 +2320,12 @@ gsupplicant_interface_create2(
         priv->proxy_handler_id[PROXY_NOTIFY_NETWORKS] =
             g_signal_connect(priv->proxy, "notify::networks",
             G_CALLBACK(gsupplicant_interface_notify_networks), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_SAE_CHECK_MFP] =
+            g_signal_connect(priv->proxy, "notify::sae-check-mfp",
+            G_CALLBACK(gsupplicant_interface_notify_sae_check_mfp), self);
+        priv->proxy_handler_id[PROXY_NOTIFY_SAE_PWE] =
+            g_signal_connect(priv->proxy, "notify::sae-pwe",
+            G_CALLBACK(gsupplicant_interface_notify_sae_pwe), self);
         priv->proxy_handler_id[PROXY_EAP] =
             g_signal_connect(priv->proxy, "eap",
             G_CALLBACK(gsupplicant_interface_proxy_eap), self);
@@ -2263,6 +2354,8 @@ gsupplicant_interface_create2(
         gsupplicant_interface_update_current_network(self);
         gsupplicant_interface_update_bsss(self);
         gsupplicant_interface_update_networks(self);
+        gsupplicant_interface_update_sae_check_mfp(self);
+        gsupplicant_interface_update_sae_pwe(self);
 
         gsupplicant_interface_emit_pending_signals(self);
     } else {
