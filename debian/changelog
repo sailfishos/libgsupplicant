@@ -1,3 +1,10 @@
+libgsupplicant (1.0.29) unstable; urgency=low
+
+  * Add WPA3 SAE Password-to-Element as configurable option
+  * Add WPA3 SAE Check MFP as configurable option
+
+ -- Jussi Laakkonen <jussi.laakkonen@jolla.com>  Tue, 21 Apr 2026 19:48:30 +0200
+
 libgsupplicant (1.0.28) unstable; urgency=low
 
   * Add WPA3 support, differentiate WPA2+WPA3 mixed and WPA3 SAE
