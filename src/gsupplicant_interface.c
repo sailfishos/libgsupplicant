@@ -1842,7 +1842,7 @@ gsupplicant_interface_update_sae_pwe(
     }
 
     /* Not set or too big, default to GSUPPLICANT_SAE_PWE_HNP */
-    if (value > GSUPPLICANT_SAE_PWE_BOTH_FORCE) {
+    if (value > GSUPPLICANT_SAE_PWE_BOTH) {
         GVERBOSE("[%s] %s: value too big %u, default to HnP (0)",
             priv->path, PROXY_PROPERTY_NAME_SAE_PWE, value);
         value = GSUPPLICANT_SAE_PWE_HNP;
