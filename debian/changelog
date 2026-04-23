@@ -1,3 +1,10 @@
+libgsupplicant (1.0.30) unstable; urgency=low
+
+  * Drop WPA3 SAE PWE force both option, it exists in testing only.
+
+ -- Jussi Laakkonen <jussi.laakkonen@jolla.com>  Tue, 23 Apr 2026 10:41:40 +0200
+
+
 libgsupplicant (1.0.29) unstable; urgency=low
 
   * Add WPA3 SAE Password-to-Element as configurable option
