@@ -141,7 +141,8 @@ typedef enum gsupplicant_eap_method {
     GSUPPLICANT_EAP_METHOD_WSC          = (0x00008000),
     GSUPPLICANT_EAP_METHOD_IKEV2        = (0x00010000),
     GSUPPLICANT_EAP_METHOD_TNC          = (0x00020000),
-    GSUPPLICANT_EAP_METHOD_PWD          = (0x00040000)
+    GSUPPLICANT_EAP_METHOD_PWD          = (0x00040000),
+    GSUPPLICANT_EAP_METHOD_PAP          = (0x00080000)  /* Since 1.0.31 */
 } GSUPPLICANT_EAP_METHOD;
 
 typedef enum gsupplicant_auth_flags {

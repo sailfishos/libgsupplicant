@@ -168,7 +168,8 @@ static const GSupNameIntPair gsupplicant_eap_methods [] = {
     { "WSC",            GSUPPLICANT_EAP_METHOD_WSC },
     { "IKEV2",          GSUPPLICANT_EAP_METHOD_IKEV2 },
     { "TNC",            GSUPPLICANT_EAP_METHOD_TNC },
-    { "PWD",            GSUPPLICANT_EAP_METHOD_PWD }
+    { "PWD",            GSUPPLICANT_EAP_METHOD_PWD },
+    { "PAP",            GSUPPLICANT_EAP_METHOD_PAP },
 };
 
 static const GSupNameIntPair gsupplicant_cipher_suites [] = {
